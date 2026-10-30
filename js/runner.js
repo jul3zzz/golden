@@ -47,11 +47,18 @@ class LevelRun {
     if (this.i + 1 < this.lv.phases.length) { this.state = 'clear'; this.st = 0; S.d.phase[this.lv.id] = this.i + 1; S.save(); }
     else {
       this.state = 'done'; this.st = 0; S.d.phase[this.lv.id] = 0; S.d.done[this.lv.id] = true;
-      S.d.unlocked = Math.max(S.d.unlocked, this.lv.id + 1); S.save();
+      if (this.lv.free) {
+        const fr = S.d.free, who = fr.done[this.lv.id] || (fr.done[this.lv.id] = []);
+        if (!who.includes(this.lv.host)) who.push(this.lv.host);
+        fr.un = Math.max(fr.un, this.lv.idx + 2);
+      } else S.d.unlocked = Math.max(S.d.unlocked, this.lv.id + 1);
+      S.save();
       if (this.lv.onDone) { this.lv.onDone(); }
     }
   }
   say(s, d = 2.8) { this.bub = { s, t: d }; }
+  back() { return this.lv.back ? this.lv.back() : new MapScene(); }
+  get tag() { return this.lv.boss ? 'TRÔNE' : this.lv.tag || 'NIVEAU ' + this.lv.id; }
   restartPhase() { this.make(); this.state = 'play'; this.st = 0; this.cur.start && this.cur.start(this); }
   update(dt) {
     this.st += dt;
@@ -72,7 +79,7 @@ class LevelRun {
         }
         break;
       case 'clear': if (this.st > 1.3) { this.i++; this.dh = 0; this.make(); this.state = 'card'; this.st = 0; } break;
-      case 'done': if (this.st > 1.2 && K.any()) { G.mouse.click = false; G.go(new MapScene()); } break;
+      case 'done': if (this.st > 1.2 && K.any()) { G.mouse.click = false; G.go(this.back()); } break;
     }
     P.update(dt);
     if (this.state === 'play' && this.time0 == null) this.time0 = 0;
@@ -91,7 +98,7 @@ class LevelRun {
   drawHUD(c) {
     const lv = this.lv, n = lv.phases.length;
     c.save(); c.fillStyle = 'rgba(5,4,8,.78)'; c.fillRect(0, 0, W, 30); c.fillStyle = COL.line; c.fillRect(0, 30, W, 1); c.restore();
-    txt(c, (lv.boss ? 'TRÔNE' : 'NIVEAU ' + lv.id) + '  ·  ' + lv.title.toUpperCase(), 14, 20, { size: 12, col: COL.gold, w: 700, ls: 2 });
+    txt(c, this.tag + '  ·  ' + lv.title.toUpperCase(), 14, 20, { size: 12, col: COL.gold, w: 700, ls: 2 });
     for (let i = 0; i < n; i++) {
       const x = W / 2 - (n - 1) * 11 + i * 22;
       c.beginPath(); c.arc(x, 15, 5, 0, 7);
@@ -121,7 +128,7 @@ class LevelRun {
     if (host === 'golden') goldenAura(c, 250, 440, 3, t);
     if (lv.cast) lv.cast.forEach((id, i) => drawStick(c, id, 110 + i * 56, 440, { s: 1.6, t: t + i, face: 1 }));
     else drawStick(c, host, 250, 440, { s: host === 'golden' ? 3 : 3.4, t, face: 1, cup: host === 'golden' });
-    txt(c, lv.boss ? 'LE TRÔNE' : 'NIVEAU ' + lv.id + ' / 10', 470, 128, { size: 13, col: COL.gold, w: 700, ls: 5 });
+    txt(c, lv.boss ? 'LE TRÔNE' : lv.free ? `${lv.tag} / 5  ·  AVEC ${CH[host].name.toUpperCase()}` : 'NIVEAU ' + lv.id + ' / 10', 470, 128, { size: 13, col: COL.gold, w: 700, ls: 5 });
     txt(c, lv.title, 468, 196, { size: 64, f: 'd', col: COL.ink, w: 900, glow: hexA(CH[host].col, .6), blur: 22, max: 470 });
     txt(c, lv.sub.toUpperCase(), 470, 228, { size: 13, col: CH[host].col, w: 700, ls: 3 });
     wrap(c, '« ' + lv.quote + ' »', 470, 272, 440, 24, { size: 19, it: true, w: 500, col: '#e9e3f2' });
@@ -172,7 +179,7 @@ class LevelRun {
     txt(c, lv.freed || `${CH[lv.host].name} est libéré.`, 480, 336, { al: 'center', size: 18, col: COL.ink });
     txt(c, `${S.d.lvDeaths[lv.id] || 0} morts dans ce niveau  ·  ${S.d.deaths} au total`, 480, 368, { al: 'center', size: 13, col: COL.dim });
     txt(c, '« Ce n\'était qu\'une répétition. » — Golden', 480, 404, { al: 'center', size: 14, it: true, col: hexA(COL.red, .9) });
-    txt(c, 'Appuie sur une touche pour revenir au palais', 480, 452, { al: 'center', size: 13, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
+    txt(c, lv.free ? 'Appuie sur une touche pour revenir au mode libre' : 'Appuie sur une touche pour revenir au palais', 480, 452, { al: 'center', size: 13, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
     c.restore();
   }
   drawPause(c) {
@@ -181,7 +188,7 @@ class LevelRun {
     txt(c, '« Même en pause, je te vois. »', 480, 186, { al: 'center', size: 15, it: true, col: COL.dim });
     if (btn(c, 360, 220, 240, 48, 'Reprendre')) this.paused = false;
     if (btn(c, 360, 278, 240, 48, 'Recommencer la phase')) { this.paused = false; this.restartPhase(); }
-    if (btn(c, 360, 336, 240, 48, 'Retour au palais')) { this.paused = false; G.go(new MapScene()); }
+    if (btn(c, 360, 336, 240, 48, this.lv.free ? 'Retour au mode libre' : 'Retour au palais')) { this.paused = false; G.go(this.back()); }
     if (btn(c, 360, 394, 240, 48, A.muted ? 'Son : coupé' : 'Son : activé')) A.setMute(!A.muted);
   }
 }

@@ -138,7 +138,7 @@ const captchaPhase = L => ({
 const TOS = [
   'Article 1 — Golden a toujours raison.', 'Article 2 — En cas de désaccord, voir l\'article 1.',
   'Article 3 — Toute rage exprimée devient la propriété de Golden.', 'Article 4 — Le café de Golden ne doit jamais refroidir.',
-  'Article 5 — Jules s\'engage à ne pas casser le sol. Il le cassera quand même.', 'Article 6 — None garde son afro sous trois mètres de diamètre.',
+  'Article 5 — Jules s\'engage à ne pas casser le sol. Il le cassera quand même.', 'Article 6 — None garde son cerveau à l\'intérieur de son crâne. Il déborde quand même.',
   '@7', 'Article 8 — Fanta n\'a pas le droit de frapper les murs porteurs.', 'Article 9 — Mitty est la seule personne raisonnable ici.',
   'Article 10 — Fondu garde sa kippa, quoi qu\'il arrive.', 'Article 11 — Norowareta n\'existe qu\'à 72 %.',
   'Article 12 — Toute tentative de quitter le jeu sera prédite.', 'Article 13 — « oi oi oi » est une phrase complète.',

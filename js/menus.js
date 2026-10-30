@@ -35,9 +35,10 @@ class TitleScene {
     txt(c, 'GOLDEN', 64, 196, { size: 138, f: 'd', col: COL.gold, w: 900, glow: hexA(COL.gold, .7), blur: 30 });
     txt(c, 'LE ROI DU RAGEBAIT', 70, 236, { size: 16, col: COL.red, w: 700, ls: 8 });
     txt(c, 'Il a déjà prédit comment tu vas perdre.', 70, 272, { size: 17, it: true, col: COL.ink, w: 500 });
-    txt(c, '10 niveaux · 1 trône · environ une heure de rage', 70, 296, { size: 13, col: COL.dim });
+    txt(c, '10 niveaux · 1 trône · un mode libre · environ une heure de rage', 70, 296, { size: 13, col: COL.dim });
     if (btn(c, 70, 320, 220, 48, S.d.deaths || S.d.unlocked > 1 ? 'CONTINUER' : 'JOUER', { size: 20, w: 700 })) G.go(new MapScene());
-    if (btn(c, 70, 376, 220, 44, 'PERSONNAGES', { size: 16 })) G.go(new GalleryScene());
+    if (btn(c, 70, 376, 220, 44, 'MODE LIBRE', { size: 16, col: COL.gold })) G.go(new FreeScene());
+    if (btn(c, 300, 376, 170, 44, 'PERSONNAGES', { size: 14 })) G.go(new GalleryScene());
     if (btn(c, this.qx, this.qy, 220, 44, 'QUITTER', { size: 16, col: COL.red })) { this.quitN++; this.quit = 2.6; A.oi('Tu ne pars pas.'); }
     if (this.quit > 0) txt(c, this.quitN < 3 ? '« Tu ne pars pas. » — Golden' : this.quitN < 6 ? '« Ferme l\'onglet si tu oses. Je le saurai. »' : '« Bon. Le bouton ne bouge plus. Ça ne change rien. »', 70, 492, { size: 15, it: true, col: COL.red, a: Math.min(1, this.quit) });
     if (S.d.deaths) { skull(c, 846, 28, .9); txt(c, `${S.d.deaths} morts`, 860, 32, { size: 13, col: COL.ink, w: 700 }); }

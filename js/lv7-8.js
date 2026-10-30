@@ -113,7 +113,7 @@ const Q = {
     const ans = words.map((w, i) => ({ l: w, c: cols[(i + 1) % 4] === STROOP[w] ? cols[(i + 2) % 4] : cols[(i + 1) % 4] }));
     return { q: 'Clique sur le MOT « ROUGE ».', ans, ok: words.indexOf('ROUGE'), why: 'Le mot. Pas la couleur. Lis.' };
   },
-  afro: () => ({ q: 'Qui a une afro ?', ans: ['Fondu', 'None', 'Mitty', 'Norowareta'], ok: 1 }),
+  cerveau: () => ({ q: 'Qui a un cerveau qui dépasse du crâne ?', ans: ['Fondu', 'None', 'Mitty', 'Norowareta'], ok: 1, why: 'None. Son cerveau ne rentre plus dans sa tête.' }),
   deuxDeux: () => ({ q: 'Combien font 2 + 2 ?', ans: ['4', '5', 'Ce que Golden décide', '22'], ok: 2, why: 'Ici, c\'est Golden qui décide. Même les maths.' }),
   rien: () => ({ q: 'Ne clique sur RIEN.', kind: 'nothing', time: 5, big: true }),
   boisson: () => ({ q: 'Que boit Golden ?', ans: ['Du soda', 'Du café', 'Du thé', 'Tes larmes'], ok: 1, why: 'Du café. Il en boit en ce moment même.' }),
@@ -132,7 +132,7 @@ const Q = {
   fanta: () => ({ q: 'Fanta est…', ans: ['gros', 'musclé', 'un hologramme', 'une fille'], ok: 1, why: 'Gros, c\'est Jules. Fanta, c\'est les muscles.' }),
   kippa: () => ({ q: 'Qui porte une kippa ?', ans: ['None', 'Jules', 'Fondu', 'Golden'], ok: 2 }),
   bonne: () => ({ q: 'Quelle réponse est la bonne ?', ans: ['Celle-ci', 'Pas celle-ci', 'La première', 'Golden a toujours raison'], ok: 3 }),
-  mitty: () => ({ q: 'Mitty est…', ans: ['un robot', 'une fille', 'un hologramme', 'Golden déguisé'], ok: 1, kind: 'shuffle', spd: .5 }),
+  mitty: () => ({ q: 'Mitty est…', ans: ['un robot', 'la GOAT', 'un hologramme', 'Golden déguisée'], ok: 1, kind: 'shuffle', spd: .5, why: 'La GOAT. Même Golden le sait.' }),
   oi: () => ({ q: 'Que dit Golden ?', ans: ['ah ah ah', 'gg wp', 'oi oi oi', 'pardon'], ok: 2, kind: 'flee', time: 12 }),
   niveaux: () => ({ q: 'Combien de niveaux avant le trône de Golden ?', ans: ['9', '10', '11', 'Golden décide'], ok: 1, why: 'Dix. Pour une fois, la logique gagnait. Tu ne t\'y attendais pas.' }),
   cible: () => ({ q: 'Dernière question : clique sur Golden.', kind: 'golden', time: 14 })
@@ -145,7 +145,7 @@ LEVELS.push({
   freed: 'Tu as survécu au QCM. Golden note ta moyenne : 0/20, par principe.',
   taunts: ['Mauvaise réponse. Comme prévu.', 'Tu as lu la question ? Non.', 'Zéro. Pointé.'],
   phases: [
-    { name: 'Échauffement', proph: 'Tu vas répondre « 4 ». Tu as tort.', make: quizPhase([Q.roi, Q.stroopMot, Q.afro, Q.deuxDeux, Q.rien, Q.boisson]) },
+    { name: 'Échauffement', proph: 'Tu vas répondre « 4 ». Tu as tort.', make: quizPhase([Q.roi, Q.stroopMot, Q.cerveau, Q.deuxDeux, Q.rien, Q.boisson]) },
     { name: 'Les Pièges', proph: 'Je vais prédire ta réponse avant que tu cliques. Tu vas cliquer quand même.', tip: 'Un bouton survolé trop longtemps devient « prédit ».', make: quizPhase([Q.statique, Q.holo, Q.predit, Q.morts, Q.stroopCouleur, Q.fanta]) },
     { name: 'La Finale', proph: 'La bonne réponse va fuir ta souris. Comme tes chances.', make: quizPhase([Q.kippa, Q.bonne, Q.mitty, Q.oi, Q.niveaux, Q.cible]) }
   ]
@@ -204,7 +204,7 @@ function runPhase(cfg) {
         if (!gap && this.y >= GY) { if (!this.ground) A.land(); this.y = GY; this.vy = 0; this.ground = true; this.jumps = 0; }
         else this.ground = false;
       }
-      if (this.y > H + 40) return L.die(this.cur === 'none' ? 'None a raté le gouffre. Il fallait rester au sol pour planer.' : `${CH[this.cur].name} ne plane pas. Il fallait None.`);
+      if (this.y > H + 40) return L.die(this.cur === 'none' ? 'None a raté le gouffre. Il fallait rester au sol pour léviter.' : `${CH[this.cur].name} ne lévite pas. Il fallait None.`);
       const box = { x: px - 11, y: this.y - 44, w: 22, h: 44 };
       for (const o of this.obs) {
         if (o.x > px + 40 || o.x < px - 600) continue;
@@ -257,7 +257,7 @@ function runPhase(cfg) {
         }
       }
       c.restore();
-      drawStick(c, this.cur, 200, this.y, { t: this.t, run: this.ground ? 1 : 0, air: !this.ground, afro: 13 });
+      drawStick(c, this.cur, 200, this.y, { t: this.t, run: this.ground ? 1 : 0, air: !this.ground });
       const pr = Math.min(1, (this.dist + 200) / this.end);
       c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(200, 44, 560, 4); c.fillStyle = COL.gold; c.fillRect(200, 44, 560 * pr, 4);
       if (cfg.lie) txt(c, 'Les étiquettes mentent. Les formes, jamais.', 480, 68, { al: 'center', size: 13, it: true, col: COL.red });
@@ -277,7 +277,7 @@ LEVELS.push({
   freed: 'Les six ont couru ensemble. Golden a chronométré. Il n\'est pas impressionné.',
   taunts: ['Mauvais personnage. Bon timing pour mourir.', 'Tu as paniqué sur le 4. Je l\'avais noté.', 'Six amis. Zéro coordination.'],
   phases: [
-    { name: 'Trois Amis', proph: 'Tu vas oublier de changer de personnage avant la plaque. Deux fois.', tip: 'Mur → Fanta (3). Gouffre → None (2), reste au sol pour planer. Plaque → Jules (1) pour ouvrir la porte.', make: runPhase({ chars: ['jules', 'none', 'fanta'], types: ['brick', 'gap', 'plate'], reps: 4, spd: 300 }) },
+    { name: 'Trois Amis', proph: 'Tu vas oublier de changer de personnage avant la plaque. Deux fois.', tip: 'Mur → Fanta (3). Gouffre → None (2), reste au sol pour léviter. Plaque → Jules (1) pour ouvrir la porte.', make: runPhase({ chars: ['jules', 'none', 'fanta'], types: ['brick', 'gap', 'plate'], reps: 4, spd: 300 }) },
     { name: 'Cinq Amis', proph: 'Le mur haut arrive juste après le laser. Tu vas garder Norowareta.', tip: 'Laser → Norowareta (6). Mur haut → Mitty (4) et son double saut.', make: runPhase({ chars: ['jules', 'none', 'fanta', 'mitty', 'noro'], types: ['brick', 'gap', 'plate', 'laser', 'high'], reps: 3, spd: 320 }) },
     { name: 'Les Six', proph: 'J\'ai repeint les étiquettes. Tu vas lire les couleurs au lieu de regarder les formes.', tip: 'Brume noire → Fondu (5). Les portraits et couleurs mentent : fie-toi à la forme.', make: runPhase({ chars: CH_ORDER, types: ['brick', 'gap', 'plate', 'laser', 'high', 'fog'], reps: 3, spd: 335, lie: true }) }
   ]

@@ -146,7 +146,7 @@ const A = {
 /* ---------- sauvegarde ---------- */
 const S = {
   key: 'golden-ragebait-v1', d: null,
-  fresh() { return { unlocked: 1, phase: {}, deaths: 0, time: 0, lvDeaths: {}, done: {}, finished: false, muted: false }; },
+  fresh() { return { unlocked: 1, phase: {}, deaths: 0, time: 0, lvDeaths: {}, done: {}, finished: false, muted: false, free: { un: 1, done: {}, last: 'jules' } }; },
   load() { try { this.d = JSON.parse(localStorage.getItem(this.key)); } catch (e) { this.d = null; } this.d = Object.assign(this.fresh(), this.d || {}); },
   save() { try { localStorage.setItem(this.key, JSON.stringify(this.d)); } catch (e) { } },
   reset() { const m = this.d.muted; this.d = this.fresh(); this.d.muted = m; this.save(); }

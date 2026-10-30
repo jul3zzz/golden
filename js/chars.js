@@ -3,9 +3,9 @@
 
 const CH = {
   jules: { name: 'Jules', col: '#6f8cff', title: 'Le Poids Lourd', desc: "Gros. Très lent. Chaque pas fait BOUM, et s'il court trop longtemps, il doit s'arrêter pour reprendre son souffle.", power: "Casse les sols fragiles. Les plaques de pression l'adorent." },
-  none: { name: 'None', col: '#b57bff', title: "L'Afro", desc: "Une afro si grande qu'elle a sa propre gravité. Elle grossit quand il stresse.", power: 'Plane au-dessus des gouffres.' },
+  none: { name: 'None', col: '#b57bff', title: 'Le Cerveau', desc: "Un cerveau tellement gros qu'il ne rentre plus dans son crâne. Il réfléchit à tout. Surtout trop.", power: 'Lévite par la pensée et voit les pièges cachés.' },
   fanta: { name: 'Fanta', col: '#ff8a1f', title: 'Le Musclé', desc: "Des bras plus gros que sa tête. Il frappe d'abord et ne réfléchit jamais.", power: 'Pulvérise les murs de briques.' },
-  mitty: { name: 'Mitty', col: '#ff5fa2', title: 'La Seule Fille', desc: "La plus agile de la bande, et la seule qui garde son calme. Presque toujours.", power: 'Double saut.' },
+  mitty: { name: 'Mitty', col: '#ff5fa2', title: 'La GOAT', desc: "La GOAT. La plus forte de la bande, la plus agile, la seule qui garde son calme. Même Golden la respecte (il ne l'avouera jamais).", power: 'Double saut.' },
   fondu: { name: 'Fondu', col: '#5dff9e', title: 'Le Fondu', desc: "Sa kippa ne tombe jamais, même la tête en bas. Il connaît le noir mieux que personne.", power: 'Traverse les murs de brume noire.' },
   noro: { name: 'Norowareta', col: '#29f0ff', title: "L'Hologramme", desc: "呪われた. Un signal maudit coincé entre deux fréquences. Il n'existe qu'à 72 %.", power: 'Phase à travers les lasers.' },
   golden: { name: 'Golden', col: '#f2c14e', title: 'Roi du Ragebait', desc: "Yeux rouges, tasse de café, aura infinie. Il a déjà prédit ta prochaine erreur. oi oi oi.", power: 'Prédit tout.' }
@@ -15,7 +15,51 @@ const HEADY = { jules: -46 };
 
 function seg(c, x1, y1, x2, y2) { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
 
-/* x,y = pieds. o : s, face, t, run, air, punch, drink, afro, a, crown, redEyes, noRed, noCape */
+/* cerveau géant de None, posé sur le haut du crâne (R = taille) */
+function drawBrain(c, headY, hr, R, col, t, tint) {
+  const pul = 1 + .025 * Math.sin(t * 4), rx = R * 1.18 * pul, ry = R * .86 * pul;
+  const cx = -.5, cy = headY - hr * .35 - ry * .8;
+  c.save();
+  c.beginPath();
+  const n = 9, steps = n * 8;
+  for (let i = 0; i <= steps; i++) {
+    const a = i / steps * Math.PI * 2, k = 1 + .06 * Math.abs(Math.sin(a * n / 2));
+    const fl = Math.sin(a) > 0 ? 1 - .22 * Math.sin(a) : 1; // dessous un peu aplati
+    const px = cx + Math.cos(a) * rx * k, py = cy + Math.sin(a) * ry * k * fl;
+    if (i) c.lineTo(px, py); else c.moveTo(px, py);
+  }
+  c.closePath();
+  if (tint) c.fillStyle = 'transparent';
+  else { const g = c.createRadialGradient(cx - rx * .3, cy - ry * .5, 1, cx, cy, rx * 1.15); g.addColorStop(0, '#ffd2ef'); g.addColorStop(.45, '#e48ad0'); g.addColorStop(1, '#7d3e9c'); c.fillStyle = g; }
+  c.strokeStyle = tint || col; c.lineWidth = 2; c.fill(); c.stroke();
+  if (!tint) {
+    c.save(); c.clip();
+    c.shadowBlur = 0; c.strokeStyle = 'rgba(92,30,110,.75)'; c.lineWidth = Math.max(1, R * .085);
+    // scissure entre les deux hémisphères
+    c.beginPath(); c.moveTo(cx, cy - ry * 1.05); c.bezierCurveTo(cx + 1.5, cy - ry * .4, cx - 1.5, cy + ry * .1, cx + .5, cy + ry * .55); c.stroke();
+    // circonvolutions
+    for (const sd of [-1, 1]) for (let r = 0; r < 4; r++) {
+      const y0 = cy - ry * .62 + r * ry * .42, x0 = cx + sd * rx * .12, x1 = cx + sd * rx * (.95 - Math.abs(r - 1.3) * .14);
+      c.beginPath(); c.moveTo(x0, y0);
+      const segs = 4;
+      for (let j = 1; j <= segs; j++) { const xx = x0 + (x1 - x0) * j / segs, yy = y0 + (j % 2 ? -1 : 1) * ry * .14 + Math.sin(r * 3 + j) * ry * .05; c.quadraticCurveTo(x0 + (x1 - x0) * (j - .5) / segs, yy + (j % 2 ? -1 : 1) * ry * .1, xx, yy); }
+      c.stroke();
+    }
+    c.restore();
+    // reflet
+    c.shadowBlur = 0; c.fillStyle = 'rgba(255,255,255,.35)';
+    c.beginPath(); c.ellipse(cx - rx * .45, cy - ry * .5, rx * .16, ry * .1, -.5, 0, 7); c.fill();
+    // éclairs de pensée
+    if (Math.sin(t * 5.3) > .82) {
+      c.strokeStyle = '#fff2a8'; c.shadowColor = col; c.shadowBlur = 10; c.lineWidth = 1.3;
+      const sx = cx + Math.sin(t * 17) * rx * .6, sy = cy - ry * 1.05;
+      c.beginPath(); c.moveTo(sx, sy); c.lineTo(sx + 3, sy - 4); c.lineTo(sx - 1, sy - 6); c.lineTo(sx + 2, sy - 10); c.stroke();
+    }
+  }
+  c.restore();
+}
+
+/* x,y = pieds. o : s, face, t, run, air, punch, drink, brain, a, crown, redEyes, noRed, noCape */
 function drawStick(c, id, x, y, o = {}) {
   const s = o.s || 1, f = o.face || 1, t = o.t || 0;
   c.save(); c.translate(x, y); c.scale(s * f, s);
@@ -159,55 +203,23 @@ function stickBody(c, id, o, tint) {
   // Jules : bras devant le ventre, sinon le bras du fond passe derrière
   if (!big) arm(sL, h1, eL);
 
-  // afro de None (derrière la tête) : une seule masse bouclée, un peigne planté dedans
-  if (id === 'none') {
-    const R = o.afro || 13, bob = air ? -1.5 : Math.abs(sw) * 1.4;
-    const cx = -R * .15, cy = headY - R * .62 - bob, rx = R * 1.32, ry = R * 1.05;
-    const n = Math.round(13 + R * .35), steps = n * 6;
-    c.save();
-    c.beginPath();
-    for (let i = 0; i <= steps; i++) {
-      const a = i / steps * Math.PI * 2, k = 1 + .085 * Math.abs(Math.sin(a * n / 2));
-      const px = cx + Math.cos(a) * rx * k, py = cy + Math.sin(a) * ry * k;
-      if (i) c.lineTo(px, py); else c.moveTo(px, py);
-    }
-    c.closePath();
-    if (tint) c.fillStyle = 'transparent';
-    else { const g = c.createRadialGradient(cx - rx * .35, cy - ry * .45, 0, cx, cy, rx * 1.1); g.addColorStop(0, hexA(col, .38)); g.addColorStop(.55, '#1c0e2c'); g.addColorStop(1, '#0e0716'); c.fillStyle = g; }
-    c.strokeStyle = tint || col; c.lineWidth = 2; c.fill(); c.stroke();
-    if (!tint) {
-      // boucles à l'intérieur
-      c.shadowBlur = 0; c.strokeStyle = hexA(col, .5); c.lineWidth = 1.2;
-      const m = Math.round(9 + R * .5), cr = Math.max(1.6, R * .12);
-      for (let j = 0; j < m; j++) {
-        const a = j * 2.399, d = Math.sqrt((j + .5) / m) * .8;
-        c.beginPath(); c.arc(cx + Math.cos(a) * rx * d, cy + Math.sin(a) * ry * d, cr, j, j + 3.8); c.stroke();
-      }
-      // peigne afro (manche en poing levé)
-      const ps = Math.min(R, 30) / 13, pa = -1.05;
-      const bx = cx + Math.cos(pa) * rx * .72, by = cy + Math.sin(pa) * ry * .72;
-      c.save(); c.translate(bx, by); c.rotate(pa + Math.PI / 2); c.scale(ps, ps);
-      c.strokeStyle = '#d8c9ee'; c.lineWidth = 1.1;
-      for (let k = -1; k <= 1; k++) seg(c, k * 1.8, 0, k * 1.8, 5);
-      c.fillStyle = '#d8c9ee'; c.shadowColor = col; c.shadowBlur = 6;
-      c.fillRect(-3.2, -2.2, 6.4, 2.4); c.fillRect(-1, -8, 2, 6);
-      c.beginPath(); c.arc(0, -9.5, 2.4, 0, 7); c.fill();
-      c.restore();
-    }
-    c.restore();
-  }
-
   // tête
   c.save(); c.fillStyle = tint ? 'transparent' : dark; c.beginPath(); c.arc(0, headY, hr, 0, 7); c.fill(); c.stroke(); c.restore();
 
   // accessoires
-  if (id === 'none' && !tint) {
-    // frange bouclée sur le haut du crâne
-    const r = hr + .6, x1 = Math.cos(-.55) * r, y1 = headY + Math.sin(-.55) * r;
-    c.save(); c.fillStyle = '#1c0e2c'; c.strokeStyle = col; c.lineWidth = 1.5;
-    c.beginPath(); c.arc(0, headY, r, Math.PI + .55, -.55);
-    for (let i = 1; i <= 4; i++) { const xx = x1 - 2 * x1 * i / 4; c.quadraticCurveTo(xx + x1 / 4, headY - hr * .12, xx, y1); }
-    c.closePath(); c.fill(); c.stroke(); c.restore();
+  if (id === 'none') drawBrain(c, headY, hr, o.brain || 14, col, t, tint);
+  if (id === 'mitty' && !tint) {
+    // chaîne en or de la GOAT
+    c.save(); c.shadowColor = COL.gold; c.shadowBlur = 8; c.strokeStyle = COL.gold; c.lineWidth = 1.3;
+    c.beginPath(); c.moveTo(-3.5, shY + 1); c.quadraticCurveTo(0, shY + 7, 3.5, shY + 1); c.stroke();
+    c.fillStyle = COL.gold; c.beginPath(); c.arc(0, shY + 7.5, 2.3, 0, 7); c.fill();
+    for (let i = 0; i < 3; i++) {
+      const k = (t * .7 + i / 3) % 1, a = Math.sin(k * Math.PI), sx = [-13, 12, -9][i], sy = headY + [-6, 2, -16][i] - k * 6;
+      c.save(); c.globalAlpha *= a; c.beginPath();
+      for (let j = 0; j < 8; j++) { const r = j % 2 ? .9 : 2.6, an = j * Math.PI / 4; c.lineTo(sx + Math.cos(an) * r, sy + Math.sin(an) * r); }
+      c.closePath(); c.fill(); c.restore();
+    }
+    c.restore();
   }
   if (o.winded && !tint) {
     // bouche ouverte qui halète
@@ -267,7 +279,7 @@ function headIcon(c, id, x, y, r, o = {}) {
   if (o.ring !== false) { c.strokeStyle = o.ringCol || hexA(CH[id].col, .7); c.lineWidth = 1.5; c.stroke(); }
   c.clip();
   const sc = r / (id === 'none' ? 21 : 13);
-  drawStick(c, id, x, y - (HEADY[id] || -42) * sc + (id === 'golden' || o.crown ? 3 * sc : 0) + (id === 'none' ? 7 * sc : 0), Object.assign({ t: G.t, noCape: true }, o, { s: sc, a: 1 }));
+  drawStick(c, id, x, y - (HEADY[id] || -42) * sc + (id === 'golden' || o.crown ? 3 * sc : 0) + (id === 'none' ? 9 * sc : 0), Object.assign({ t: G.t, noCape: true }, o, { s: sc, a: 1 }));
   c.restore();
 }
 

@@ -102,113 +102,258 @@ LEVELS.push({
 });
 
 /* =========================================================
-   NIVEAU 2 — NONE — L'Afro de Sisyphe (vol à un bouton)
+   NIVEAU 2 — NONE — Le Cerveau en Surchauffe (énigmes)
    ========================================================= */
-function flightPhase(cfg) {
+const NEUR = [
+  { x: 480, y: 152, col: '#ff5fa2', f: 330, keys: ['ArrowUp', 'KeyW', 'Digit1'] },
+  { x: 650, y: 300, col: '#29f0ff', f: 440, keys: ['ArrowRight', 'KeyD', 'Digit2'] },
+  { x: 480, y: 448, col: '#ffd23f', f: 550, keys: ['ArrowDown', 'KeyS', 'Digit3'] },
+  { x: 310, y: 300, col: '#5dff9e', f: 660, keys: ['ArrowLeft', 'KeyA', 'Digit4'] }
+];
+
+function brainBg(c, t) {
+  c.fillStyle = '#07050c'; c.fillRect(0, 0, W, H);
+  c.save(); c.strokeStyle = 'rgba(181,123,255,.07)'; c.lineWidth = 1;
+  for (let i = 0; i < 14; i++) {
+    const x1 = (i * 173) % W, y1 = (i * 97) % H, x2 = (i * 311 + 200) % W, y2 = (i * 59 + 140) % H;
+    c.beginPath(); c.moveTo(x1, y1); c.quadraticCurveTo((x1 + x2) / 2 + Math.sin(t * .4 + i) * 40, (y1 + y2) / 2, x2, y2); c.stroke();
+    c.fillStyle = `rgba(181,123,255,${.12 + .1 * Math.sin(t * 2 + i)})`; c.beginPath(); c.arc(x1, y1, 2.5, 0, 7); c.fill();
+  }
+  c.restore();
+}
+/* None dans un coin, le cerveau grossit avec la difficulté */
+function brainHost(c, t, k, x = 92, y = 500) {
+  softAura(c, x, y - 50, CH.none.col, 90, .18);
+  drawStick(c, 'none', x, y, { s: 2.2, t, brain: 14 + k * 9 });
+  if (k > .55) txt(c, 'surchauffe…', x, y - 150 - k * 30, { al: 'center', size: 11, it: true, col: COL.red, a: .5 + .5 * Math.sin(t * 9) });
+}
+
+/* --- Phase : Simon (neurones) --- */
+function simonPhase(cfg) {
   return L => ({
     init() {
-      this.y = 270; this.vy = 0; this.x = 220; this.af = 13; this.pil = []; this.spawn = .9; this.pass = 0; this.t = 0;
-      this.gs = 1; this.flipT = cfg.flip || 0; this.warned = false; this.las = []; this.lasT = 2.4; this.hist = [];
-      this.gap = cfg.gap + (L.pity ? 30 : 0); this.scroll = 0; this.started = false;
+      this.seq = []; this.r = 0; this.st = 'wait'; this.t = 0; this.at = 0; this.lit = -1; this.litT = 0; this.inp = 0; this.inT = 0;
+      this.pos = [0, 1, 2, 3]; this.rot = 0; this.anim = 0; this.lie = false;
     },
-    rad() { return this.af * .82 + 4; },
+    start() { this.next(); },
+    next() {
+      while (this.seq.length < cfg.lens[this.r]) this.seq.push(U.ri(0, 3));
+      this.st = 'show'; this.at = 0; this.k = 0; this.inp = 0; this.lit = -1;
+      this.pos = [0, 1, 2, 3]; this.anim = 0; this.pfrom = null;
+      this.lie = cfg.lie === this.r;
+      const sp = (cfg.spd || 1) * (L.pity ? 1.35 : 1) * (1 - this.r * .05);
+      this.on = .46 * sp; this.gap = .2 * sp;
+      if (this.lie) L.say('Cette fois, je chante faux. N\'écoute pas. Regarde.', 2.4);
+    },
+    // emplacement (0 haut, 1 droite, 2 bas, 3 gauche) où se trouve le neurone n
+    slot(n) { return this.pos.indexOf(n); },
+    xy(n) {
+      const a = NEUR[this.slot(n)], b = NEUR[this.pfrom ? this.pfrom.indexOf(n) : this.slot(n)], k = U.eo(Math.min(1, this.anim));
+      return [U.lerp(b.x, a.x, k), U.lerp(b.y, a.y, k)];
+    },
+    flash(n, d = .32) { this.lit = n; this.litT = d; const f = NEUR[this.lie ? (n + 2) % 4 : n].f; A.tone(f, d * .9, 'triangle', .14); },
+    press(n) {
+      const want = cfg.rev ? this.seq[cfg.lens[this.r] - 1 - this.inp] : this.seq[this.inp];
+      this.flash(n, .22);
+      if (n !== want) return L.die(cfg.rev ? 'À l\'envers. Tu l\'as fait à l\'endroit. Par réflexe.' : 'Mauvais neurone. Ton cerveau a menti.');
+      this.inp++; this.inT = 0;
+      if (this.inp >= cfg.lens[this.r]) {
+        A.blip(880); this.st = 'ok'; this.at = 0;
+      }
+    },
     update(dt) {
-      this.t += dt; this.scroll += cfg.spd * dt;
-      if (K.jumpHit() || G.mouse.click) { G.mouse.click = false; this.vy = -430 * this.gs; this.started = true; A.jump(.8); P.burst(this.x - 4, this.y + 30 * this.gs, 4, '#b57bff', 80, .4, 2); }
-      if (!this.started) { this.y = 270 + Math.sin(this.t * 3) * 8; return; }
-      this.vy += 1350 * this.gs * dt; this.vy = U.clamp(this.vy, -700, 700); this.y += this.vy * dt;
-      this.hist.push(this.y); if (this.hist.length > 60) this.hist.shift();
-      if (cfg.flip) {
-        this.flipT -= dt;
-        if (this.flipT < 1.1 && !this.warned) { this.warned = true; A.warn(); }
-        if (this.flipT <= 0) { this.gs *= -1; this.flipT = cfg.flip; this.warned = false; G.flash = .2; G.flashCol = '#b57bff'; this.vy *= .3; }
-      }
-      this.spawn -= dt;
-      if (this.spawn <= 0 && this.pass + this.pil.length < cfg.need) {
-        this.spawn = cfg.every;
-        const m = this.gap / 2 + 50;
-        this.pil.push({ x: W + 40, gy: U.rnd(m, H - m), mv: cfg.move ? U.rnd(40, 80) * (Math.random() < .5 ? -1 : 1) : 0, ph: U.rnd(0, 6) });
-      }
-      for (const p of this.pil) {
-        p.x -= cfg.spd * dt;
-        p.cy = p.gy + (p.mv ? Math.sin(this.t * 1.5 + p.ph) * p.mv : 0);
-        if (!p.passed && p.x + 70 < this.x) {
-          p.passed = true; this.pass++; this.af += cfg.grow; A.blip(660 + this.pass * 12);
-          if (this.pass === 5) L.say("Ton afro grossit à chaque pilier. Je l'avais prévu.", 2.6);
-          if (this.pass >= cfg.need) return L.win();
+      this.t += dt; if (this.litT > 0) { this.litT -= dt; if (this.litT <= 0) this.lit = -1; }
+      if (this.anim < 1 && this.pfrom) this.anim += dt * 1.6;
+      if (this.st === 'show') {
+        this.at += dt;
+        const per = this.on + this.gap, i = Math.floor(this.at / per);
+        if (i < cfg.lens[this.r] && this.k === i && this.at - i * per < this.on) { this.flash(this.seq[i], this.on); this.k++; }
+        if (this.at > per * cfg.lens[this.r] + .25) {
+          this.st = 'input'; this.inT = 0;
+          if (cfg.rotate === this.r || (cfg.rotateFrom != null && this.r >= cfg.rotateFrom)) {
+            this.pfrom = this.pos.slice(); const s = this.r % 2 ? 1 : 3;
+            this.pos = this.pos.map((_, j) => this.pfrom[(j + s) % 4]); this.anim = 0; A.zap();
+            L.say('Les neurones ont bougé. Les couleurs, elles, n\'ont pas menti.', 2.2);
+          } else this.pfrom = null;
         }
-      }
-      this.pil = this.pil.filter(p => p.x > -100);
-      const r = this.rad();
-      if (this.y - r < 32 || this.y + r > H) return L.die(this.y < 100 ? "Le plafond aussi, c'est un mur." : 'Le sol était là depuis le début.');
-      for (const p of this.pil) {
-        const top = { x: p.x, y: -10, w: 70, h: p.cy - this.gap / 2 + 10 }, bot = { x: p.x, y: p.cy + this.gap / 2, w: 70, h: H };
-        if (U.circRect(this.x, this.y, r, top) || U.circRect(this.x, this.y, r, bot)) return L.die("L'afro a touché un pilier. L'afro est trop grande.");
-      }
-      if (cfg.laser) {
-        this.lasT -= dt;
-        if (this.lasT <= 0) {
-          this.lasT = L.pity ? 3.3 : 2.5;
-          const avg = this.hist.reduce((a, b) => a + b, 0) / this.hist.length;
-          const py = U.clamp(.55 * avg + .45 * (this.y + this.vy * .35), 50, H - 30);
-          this.las.push({ y: py, t: 0 }); A.warn();
-        }
-        for (const l of this.las) {
-          l.t += dt;
-          if (l.t > .85 && l.t < 1.1) {
-            if (!l.fired) { l.fired = true; A.zap(); G.shake = 6; }
-            if (Math.abs(this.y - l.y) < r + 4) return L.die('Golden a tiré là où tu allais être. Évidemment.');
-          }
-        }
-        this.las = this.las.filter(l => l.t < 1.25);
+      } else if (this.st === 'input') {
+        this.inT += dt;
+        if (this.inT > (L.pity ? 6 : 4.2)) return L.die('Trop lent. Ton cerveau a surchauffé.');
+        for (let s = 0; s < 4; s++) if (NEUR[s].keys.some(k => G.hit[k])) { this.press(this.pos[s]); return; }
+        const m = G.mouse;
+        if (m.click) for (let n = 0; n < 4; n++) { const [x, y] = this.xy(n); if (U.dist(m.x, m.y, x, y) < 50) { m.click = false; this.press(n); return; } }
+      } else if (this.st === 'ok') {
+        this.at += dt;
+        if (this.at > .8) { this.r++; if (this.r >= cfg.lens.length) return L.win(); this.next(); }
       }
     },
     draw(c) {
-      c.fillStyle = '#08060d'; c.fillRect(0, 0, W, H);
-      c.save(); c.translate(-(this.scroll * .3 % 160), 0);
-      for (let i = 0; i < 8; i++) { c.fillStyle = 'rgba(181,123,255,.05)'; c.fillRect(i * 160, 0, 2, H); }
-      c.restore();
-      txt(c, 'oi oi oi', W - ((this.scroll * .5) % (W + 300)), 300, { size: 120, f: 'd', col: 'rgba(242,193,78,.035)', w: 900 });
-      for (const p of this.pil) {
-        for (const [y0, y1] of [[-10, p.cy - this.gap / 2], [p.cy + this.gap / 2, H + 10]]) {
-          c.fillStyle = '#100d16'; c.fillRect(p.x, y0, 70, y1 - y0);
-          c.fillStyle = COL.gold; c.shadowColor = COL.gold; c.shadowBlur = 10;
-          c.fillRect(p.x, y0, 2, y1 - y0); c.fillRect(p.x + 68, y0, 2, y1 - y0);
-          c.fillRect(p.x - 4, y0 < 0 ? y1 - 6 : y0, 78, 6); c.shadowBlur = 0;
-        }
+      brainBg(c, this.t);
+      c.save(); c.translate(480, 360); drawBrain(c, 0, 8, 46 + (this.st === 'input' ? 2 * Math.sin(this.t * 6) : 0), CH.none.col, this.t, null); c.restore();
+      for (let n = 0; n < 4; n++) {
+        const [x, y] = this.xy(n), nr = NEUR[n], on = this.lit === n;
+        c.save(); c.strokeStyle = hexA(nr.col, on ? .8 : .22); c.lineWidth = on ? 3 : 1.5;
+        c.beginPath(); c.moveTo(480, 300); c.quadraticCurveTo((480 + x) / 2 + 30, (300 + y) / 2 - 20, x, y); c.stroke();
+        c.fillStyle = on ? nr.col : '#120d1a'; c.shadowColor = nr.col; c.shadowBlur = on ? 40 : 8;
+        c.beginPath(); c.arc(x, y, on ? 48 : 42, 0, 7); c.fill();
+        c.strokeStyle = nr.col; c.lineWidth = 3; c.stroke(); c.restore();
+        if (!on) { c.save(); c.fillStyle = hexA(nr.col, .5); c.beginPath(); c.arc(x, y, 12, 0, 7); c.fill(); c.restore(); }
       }
-      if (cfg.laser) {
-        drawStick(c, 'golden', W - 40, 120, { s: 1.4, t: this.t, face: -1, noCape: true });
-        for (const l of this.las) {
-          if (l.t < .85) { c.save(); c.setLineDash([10, 8]); c.strokeStyle = `rgba(255,43,58,${.4 + .4 * Math.sin(l.t * 30)})`; c.lineWidth = 2; seg(c, 0, l.y, W, l.y); c.restore(); txt(c, 'PRÉDICTION', 40, l.y - 8, { size: 11, col: COL.red, w: 700, ls: 2 }); }
-          else if (l.t < 1.1) { c.save(); c.fillStyle = 'rgba(255,43,58,.5)'; c.shadowColor = '#ff2b3a'; c.shadowBlur = 30; c.fillRect(0, l.y - 10, W, 20); c.fillStyle = '#fff'; c.fillRect(0, l.y - 2, W, 4); c.restore(); }
-        }
+      const total = cfg.lens[this.r] || cfg.lens[cfg.lens.length - 1];
+      txt(c, `Série ${Math.min(this.r + 1, cfg.lens.length)} / ${cfg.lens.length}   ·   ${total} neurones`, 480, 62, { al: 'center', size: 14, col: COL.dim, w: 600 });
+      const msg = this.st === 'show' ? 'Regarde…' : this.st === 'input' ? (cfg.rev ? 'À TON TOUR — À L\'ENVERS' : 'À ton tour') : this.st === 'ok' ? 'Correct.' : '';
+      txt(c, msg, 480, 92, { al: 'center', size: 22, f: 'd', col: this.st === 'input' ? COL.gold : COL.ink, w: 900 });
+      if (this.st === 'input') {
+        for (let i = 0; i < total; i++) { c.fillStyle = i < this.inp ? COL.gold : 'rgba(255,255,255,.15)'; c.fillRect(480 - total * 9 + i * 18, 104, 12, 4); }
+        const k = 1 - this.inT / (L.pity ? 6 : 4.2); c.fillStyle = k < .3 ? COL.red : hexA(COL.gold, .6); c.fillRect(380, 116, 200 * k, 3);
       }
-      c.save(); c.translate(this.x, this.y);
-      if (this.gs < 0) c.scale(1, -1);
-      c.rotate(U.clamp(this.vy * this.gs / 1400, -.5, .5));
-      drawStick(c, 'none', 0, 42, { afro: this.af, air: true, t: this.t });
-      c.restore();
-      c.save(); c.strokeStyle = 'rgba(181,123,255,.18)'; c.setLineDash([3, 5]); c.beginPath(); c.arc(this.x, this.y, this.rad(), 0, 7); c.stroke(); c.restore();
-      const pr = this.pass / cfg.need;
-      c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(200, 516, 560, 6); c.fillStyle = '#b57bff'; c.fillRect(200, 516, 560 * pr, 6);
-      txt(c, `${this.pass} / ${cfg.need} piliers`, 480, 508, { al: 'center', size: 12, col: COL.dim, w: 600 });
-      if (!this.started) txt(c, 'Espace ou clic : gonfler l\'afro', 480, 200, { al: 'center', size: 20, col: COL.ink, a: .6 + .4 * Math.sin(this.t * 4) });
-      if (cfg.flip && this.warned) txt(c, 'LA GRAVITÉ CHANGE', 480, 90, { al: 'center', size: 30, f: 'd', col: '#b57bff', w: 900, glow: '#b57bff', a: .5 + .5 * Math.sin(this.t * 20) });
+      txt(c, 'Clic, flèches ou 1-4', 940, 528, { al: 'right', size: 11, col: COL.dim });
+      brainHost(c, this.t, (this.r + (this.inp / total)) / cfg.lens.length);
     }
   });
 }
 
+/* --- Phase : Synapses (tout allumer) --- */
+function lightsPhase(boards) {
+  return L => ({
+    init() { this.b = 0; this.t = 0; this.setup(); },
+    setup() {
+      const cf = boards[this.b], n = cf.n;
+      this.n = n; this.cell = n === 3 ? 96 : 80; this.moves = 0; this.limit = cf.limit + (L.pity ? 8 : 0); this.sabo = false; this.fx = 0;
+      this.on = Array(n * n).fill(true); this.sol = Array(n * n).fill(false);
+      const idx = U.shuffle([...Array(n * n).keys()]).slice(0, cf.k);
+      idx.forEach(i => this.toggle(i));
+    },
+    toggle(i) {
+      const n = this.n, x = i % n, y = Math.floor(i / n);
+      for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < n && yy < n) this.on[yy * n + xx] = !this.on[yy * n + xx]; }
+      this.sol[i] = !this.sol[i];
+    },
+    org() { const s = this.n * this.cell; return [480 - s / 2, 300 - s / 2 + 10]; },
+    update(dt) {
+      this.t += dt; if (this.fx > 0) this.fx -= dt;
+      const m = G.mouse;
+      if (m.click) {
+        const [ox, oy] = this.org(), x = Math.floor((m.x - ox) / this.cell), y = Math.floor((m.y - oy) / this.cell);
+        if (x >= 0 && y >= 0 && x < this.n && y < this.n) {
+          m.click = false; this.toggle(y * this.n + x); this.moves++; A.tone(380 + (this.on.filter(Boolean).length) * 30, .08, 'triangle', .1);
+          if (this.on.every(Boolean)) {
+            A.win(); this.b++;
+            if (this.b >= boards.length) return L.win();
+            L.say('Un cerveau de plus. Le prochain est plus gros.', 2); this.setup(); return;
+          }
+          if (this.moves >= this.limit) return L.die('Trop de coups. Les synapses ont fondu.');
+          const left = this.sol.filter(Boolean).length;
+          if (left === 1 && !this.sabo && !L.pity) {
+            this.sabo = true;
+            const opts = [...this.sol.keys()].filter(i => !this.sol[i]);
+            this.toggle(U.pick(opts)); this.fx = .6; A.oi(); G.shake = 6;
+            L.say('Il te restait un seul coup. J\'ai appuyé sur un neurone. Oups.', 3);
+          }
+        }
+      }
+    },
+    draw(c) {
+      brainBg(c, this.t);
+      const [ox, oy] = this.org(), cs = this.cell, n = this.n;
+      for (let i = 0; i < n * n; i++) {
+        const x = ox + (i % n) * cs, y = oy + Math.floor(i / n) * cs, on = this.on[i];
+        const hov = U.inR(G.mouse.x, G.mouse.y, x, y, cs, cs); if (hov) G.hover = true;
+        c.save();
+        c.fillStyle = on ? '#2a1640' : '#0c0912'; c.fillRect(x + 4, y + 4, cs - 8, cs - 8);
+        c.strokeStyle = on ? CH.none.col : 'rgba(255,255,255,.12)'; c.lineWidth = hov ? 3 : 2;
+        if (on) { c.shadowColor = CH.none.col; c.shadowBlur = 18; }
+        c.strokeRect(x + 4, y + 4, cs - 8, cs - 8);
+        c.fillStyle = on ? '#e9c9ff' : 'rgba(255,255,255,.08)'; c.beginPath(); c.arc(x + cs / 2, y + cs / 2, on ? 13 : 9, 0, 7); c.fill();
+        if (L.pity && this.sol[i]) { c.shadowBlur = 0; c.strokeStyle = hexA(COL.gold, .5); c.setLineDash([3, 4]); c.strokeRect(x + 12, y + 12, cs - 24, cs - 24); }
+        c.restore();
+      }
+      if (this.fx > 0) { c.fillStyle = `rgba(255,43,58,${this.fx * .3})`; c.fillRect(0, 0, W, H); }
+      txt(c, 'Allume TOUS les neurones', 480, 62, { al: 'center', size: 22, f: 'd', col: COL.gold, w: 900 });
+      txt(c, `Un clic inverse la case et ses voisines (haut, bas, gauche, droite)  ·  cerveau ${this.b + 1} / ${boards.length}`, 480, 86, { al: 'center', size: 13, col: COL.dim });
+      txt(c, `Coups : ${this.moves} / ${this.limit}`, 480, 520, { al: 'center', size: 14, col: this.moves > this.limit - 4 ? COL.red : COL.ink, w: 700 });
+      brainHost(c, this.t, this.moves / this.limit);
+    }
+  });
+}
+
+/* --- Phase : le chemin mémorisé --- */
+function pathPhase(L) {
+  const C = 9, R = 5, CS = 66, OX = 480 - C * CS / 2, OY = 132;
+  if (!L.m.path) {
+    // chemin aléatoire de la colonne 0 à la colonne 8, sans repasser deux fois au même endroit
+    let ok = false, path;
+    while (!ok) {
+      path = [[0, U.ri(0, R - 1)]]; const seen = new Set([path[0].join()]);
+      let x = 0, y = path[0][1], guard = 0;
+      while (x < C - 1 && guard++ < 80) {
+        const opts = [[1, 0], [1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => { const nx = x + dx, ny = y + dy; return ny >= 0 && ny < R && !seen.has(nx + ',' + ny); });
+        if (!opts.length) break;
+        const [dx, dy] = U.pick(opts); x += dx; y += dy; path.push([x, y]); seen.add(x + ',' + y);
+      }
+      ok = x === C - 1 && path.length >= 13 && path.length <= 18;
+    }
+    L.m.path = path; L.m.show = 3.4;
+    const near = [];
+    path.slice(3, -3).forEach(([x, y]) => [[0, 1], [0, -1]].forEach(([dx, dy]) => { const k = x + ',' + (y + dy); if (y + dy >= 0 && y + dy < R && !path.some(p => p.join() === k)) near.push([x, y + dy]); }));
+    L.m.decoy = U.pick(near);
+  }
+  const path = L.m.path, key = p => p.join(), onPath = new Set(path.map(key));
+  return {
+    init() { this.t = 0; this.st = 'show'; this.show = L.pity ? 4.5 : L.m.show; this.i = 0; this.p = path[0].slice(); this.trail = [key(path[0])]; this.crack = null; },
+    onDie() { L.m.show = Math.max(1.5, L.m.show - .35); },
+    update(dt) {
+      this.t += dt;
+      if (this.st === 'show') { if (this.t > this.show) { this.st = 'play'; A.blip(300); if (this.show < 3 && !L.m.saidShort) { L.m.saidShort = 1; L.say('J\'affiche le chemin moins longtemps à chaque mort. Le chemin, lui, ne change pas.', 3); } } return; }
+      let d = null;
+      if (G.hit.ArrowUp || G.hit.KeyW) d = [0, -1]; else if (G.hit.ArrowDown || G.hit.KeyS) d = [0, 1];
+      else if (G.hit.ArrowLeft || G.hit.KeyA) d = [-1, 0]; else if (G.hit.ArrowRight || G.hit.KeyD) d = [1, 0];
+      if (!d) return;
+      const nx = this.p[0] + d[0], ny = this.p[1] + d[1];
+      if (nx < 0 || ny < 0 || nx >= C || ny >= R) return;
+      this.p = [nx, ny]; A.tone(300 + nx * 40, .06, 'triangle', .08);
+      const k = key(this.p);
+      if (L.m.decoy && k === key(L.m.decoy)) { this.crack = this.p.slice(); return L.die('Le raccourci doré. Il n\'y a jamais de raccourci.'); }
+      if (!onPath.has(k)) { this.crack = this.p.slice(); return L.die('Ce neurone n\'était pas sur le chemin.'); }
+      if (!this.trail.includes(k)) this.trail.push(k);
+      if (k === key(path[path.length - 1])) L.win();
+    },
+    draw(c) {
+      brainBg(c, this.t);
+      const show = this.st === 'show';
+      for (let x = 0; x < C; x++) for (let y = 0; y < R; y++) {
+        const k = x + ',' + y, px = OX + x * CS, py = OY + y * CS;
+        const lit = (show && onPath.has(k)) || this.trail.includes(k);
+        const dec = !show && L.m.decoy && k === key(L.m.decoy);
+        c.save();
+        c.fillStyle = lit ? '#2a1640' : '#0d0a13'; c.fillRect(px + 3, py + 3, CS - 6, CS - 6);
+        c.strokeStyle = lit ? CH.none.col : dec ? COL.gold : 'rgba(255,255,255,.08)'; c.lineWidth = lit || dec ? 2 : 1;
+        if (lit || dec) { c.shadowColor = c.strokeStyle; c.shadowBlur = dec ? 10 + 6 * Math.sin(this.t * 5) : 14; }
+        c.strokeRect(px + 3, py + 3, CS - 6, CS - 6); c.restore();
+        if (dec) txt(c, 'raccourci ?', px + CS / 2, py + CS / 2 + 4, { al: 'center', size: 10, col: COL.gold, w: 700 });
+      }
+      const e = path[path.length - 1];
+      txt(c, 'FIN', OX + e[0] * CS + CS / 2, OY + e[1] * CS + CS / 2 + 5, { al: 'center', size: 13, col: COL.gold, w: 700 });
+      if (this.crack) { c.save(); c.strokeStyle = COL.red; c.lineWidth = 3; const px = OX + this.crack[0] * CS, py = OY + this.crack[1] * CS; seg(c, px + 10, py + 10, px + CS - 10, py + CS - 10); seg(c, px + CS - 10, py + 10, px + 10, py + CS - 10); c.restore(); }
+      drawStick(c, 'none', OX + this.p[0] * CS + CS / 2, OY + this.p[1] * CS + CS - 8, { s: .9, t: this.t, brain: 14 });
+      txt(c, show ? `Mémorise le chemin…  ${Math.max(0, this.show - this.t).toFixed(1)} s` : 'Refais le chemin de mémoire (flèches). Une case fausse = mort.', 480, 70, { al: 'center', size: show ? 22 : 15, f: show ? 'd' : 'u', col: show ? COL.gold : COL.ink, w: show ? 900 : 600 });
+      if (show) { c.fillStyle = hexA(COL.gold, .6); c.fillRect(380, 84, 200 * Math.max(0, 1 - this.t / this.show), 3); }
+      txt(c, `Temps d'affichage : ${this.show.toFixed(1)} s`, 480, 520, { al: 'center', size: 12, col: COL.dim });
+    }
+  };
+}
+
 LEVELS.push({
-  id: 2, host: 'none', title: "L'Afro de Sisyphe", sub: 'Vol à un seul bouton',
-  quote: "Mon afro plane. Le problème, c'est qu'elle grossit quand je stresse.",
-  controls: 'Espace, Z, ↑ ou clic : gonfler l\'afro pour remonter',
-  freed: 'None est libéré. Son afro mesure désormais 2 mètres.',
-  taunts: ["L'afro a gagné. Toi, non.", 'Plus ton afro grossit, plus tu perds. Comme dans la vie.', 'Flap. Flap. Mort.'],
+  id: 2, host: 'none', title: 'Le Cerveau en Surchauffe', sub: 'Énigmes et mémoire',
+  quote: "J'ai le plus gros cerveau de la bande. Le problème, c'est qu'il réfléchit trop.",
+  controls: 'Clic, flèches ou 1-4 : choisir un neurone  ·  souris : allumer les cases  ·  flèches : refaire le chemin',
+  freed: 'None est libéré. Son cerveau a pris trois tailles. Il refuse de mettre un bonnet.',
+  taunts: ['Gros cerveau. Petite mémoire.', 'Tu as réfléchi trop longtemps. Ou pas assez.', 'Ton cerveau a planté. Le mien, jamais.', 'Je connaissais la séquence avant toi.'],
   phases: [
-    { name: 'Les Piliers', proph: "Tu vas réussir les cinq premiers piliers. Ensuite, ton afro va te trahir.", make: flightPhase({ spd: 220, every: 1.55, gap: 175, grow: 1.5, need: 15 }) },
-    { name: 'La Gravité Menteuse', proph: "La gravité va changer de sens. Tu vas appuyer exactement au mauvais moment.", tip: 'Quand la gravité s\'inverse, ton bouton pousse vers le bas.', make: flightPhase({ spd: 225, every: 1.6, gap: 182, grow: 1.1, need: 15, flip: 5.5 }) },
-    { name: "L'Œil de Golden", proph: "Je vais tirer là où tu seras. Pas là où tu es.", tip: 'Le laser vise ta position future. Change de hauteur quand la ligne apparaît.', make: flightPhase({ spd: 225, every: 1.7, gap: 190, grow: .9, need: 16, move: true, laser: true }) }
+    { name: 'Les Neurones', proph: 'Tu vas réussir les trois premières séries. À la quatrième, les neurones vont bouger. Tu vas cliquer au mauvais endroit.', tip: 'Retiens les COULEURS, pas les places : à la série 4, les neurones changent de place avant ton tour.', make: simonPhase({ lens: [3, 4, 5, 6], rotate: 3, lie: 2 }) },
+    { name: 'Les Synapses', proph: 'À un seul coup de la victoire, je vais toucher ton cerveau. Juste une fois.', tip: 'Allume les 9 puis les 16 cases. Chaque clic inverse la case et ses voisines.', make: lightsPhase([{ n: 3, k: 4, limit: 14 }, { n: 4, k: 5, limit: 24 }]) },
+    { name: 'Le Chemin', proph: 'Tu vas oublier le quatrième virage. Et le raccourci doré va te tenter.', tip: 'Le chemin reste le même après chaque mort. Seul le temps pour le mémoriser diminue.', make: pathPhase },
+    { name: 'À l\'Envers', proph: 'Tu vas le refaire dans le bon sens. Par réflexe. Ton cerveau est trop poli.', tip: 'Répète chaque série en commençant par la FIN.', make: simonPhase({ lens: [3, 4, 5], rev: true, rotateFrom: 2 }) }
   ]
 });
 

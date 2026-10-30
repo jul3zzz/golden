@@ -84,9 +84,9 @@ function mazePhase(cfg) {
 
 LEVELS.push({
   id: 4, host: 'mitty', title: 'Le Fil de Mitty', sub: 'Labyrinthe à la souris',
-  quote: "Calme. Respire. Et surtout, ne touche pas les murs.",
+  quote: "Calme. Respire. Et surtout, ne touche pas les murs. La GOAT ne touche jamais les murs.",
   controls: 'Souris (ou doigt) : clique sur le départ et guide le fil jusqu\'à Mitty sans toucher les bords',
-  freed: 'Mitty est libérée. Elle refuse de parler de la phase 3.',
+  freed: 'Mitty est libérée. La GOAT refuse de parler de la phase 3.',
   taunts: ['Ta main tremble. Je le vois d\'ici.', 'Un pixel. Il suffisait d\'un pixel.', 'Mitty est déçue. Moi, je suis ravi.'],
   phases: [
     { name: 'Le Fil', proph: 'Tu vas trembler dans le dernier virage. Pas avant. Le dernier.', make: mazePhase({ w: 44, pts: [[80, 470], [80, 380], [300, 380], [300, 120], [520, 120], [520, 420], [700, 420], [700, 200], [880, 200], [880, 90]] }) },

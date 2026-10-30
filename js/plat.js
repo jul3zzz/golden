@@ -3,10 +3,10 @@
 
 const STATS = {
   jules: { spd: 175, jmp: 560, g: 1900, w: 28, h: 46, crack: .22, heavy: 1, gait: 8 },
-  none: { spd: 255, jmp: 600, g: 1750, w: 24, h: 50, glide: 1, crack: .5 },
+  none: { spd: 255, jmp: 600, g: 1750, w: 24, h: 50, glide: 1, brain: 1, crack: .5 },
   fanta: { spd: 260, jmp: 610, g: 1800, w: 26, h: 48, punch: 1, crack: .5 },
   mitty: { spd: 275, jmp: 600, g: 1800, w: 22, h: 44, djump: 1, crack: .5 },
-  fondu: { spd: 265, jmp: 620, g: 1800, w: 22, h: 46, crack: .5 },
+  fondu: { spd: 265, jmp: 620, g: 1800, w: 22, h: 46, fog: 1, crack: .5 },
   noro: { spd: 270, jmp: 620, g: 1800, w: 22, h: 46, phase: 1, crack: .5 }
 };
 
@@ -41,7 +41,7 @@ class World {
     this.p = { x: old.x || 0, y: old.y || 0, vx: 0, vy: old.vy || 0, w: this.st.w, h: this.st.h, face: old.face || 1, ground: false, gb: null, jumps: 0, coy: 0, buf: 0, phase: 0, pcd: 0, punch: 0, inv: 0, run: 0, gait: 0, tired: 0, winded: 0 };
   }
   box() { const p = this.p; return { x: p.x - p.w / 2, y: p.y - p.h, w: p.w, h: p.h }; }
-  solid(b) { return b.on && !b.nos && b.k !== 'laser' && b.k !== 'deco'; }
+  solid(b) { return b.on && !b.nos && b.k !== 'laser' && b.k !== 'deco' && !(b.k === 'fog' && this.st.fog); }
   kill(by) {
     if (this.dead || this.won) return;
     if (this.p.inv > 0) return;
@@ -215,8 +215,24 @@ class World {
   drawBlock(c, b) {
     if (b.k === 'deco' || b.hide) return;
     if (!b.on && !b.falling) return;
-    if (b.k === 'invis' && !b.seen && b.rev <= 0) return;
+    if (b.k === 'invis' && !b.seen && b.rev <= 0) {
+      // le cerveau de None devine les plateformes invisibles
+      if (this.st.brain) { c.save(); c.strokeStyle = hexA(this.tint, .45); c.setLineDash([3, 4]); c.lineWidth = 1; c.strokeRect(b.x + .5, b.y + .5, b.w - 1, b.h - 1); c.restore(); }
+      return;
+    }
     c.save();
+    if (b.k === 'fog') {
+      const t = this.t;
+      c.fillStyle = '#050407'; c.fillRect(b.x, b.y, b.w, b.h);
+      for (let i = 0; i < 7; i++) {
+        const yy = b.y + ((i * 37 + t * 22) % b.h), g = c.createRadialGradient(b.x + b.w / 2 + Math.sin(t + i) * b.w * .3, yy, 0, b.x + b.w / 2, yy, b.w * .9);
+        g.addColorStop(0, 'rgba(93,255,158,.10)'); g.addColorStop(1, 'rgba(93,255,158,0)'); c.fillStyle = g; c.fillRect(b.x, b.y, b.w, b.h);
+      }
+      c.strokeStyle = 'rgba(93,255,158,.35)'; c.setLineDash([2, 5]); c.lineWidth = 1; c.strokeRect(b.x + .5, b.y + .5, b.w - 1, b.h - 1);
+      c.restore();
+      if (b.h > 90) txt(c, 'BRUME', b.x + b.w / 2, b.y + 18, { al: 'center', size: 9, col: 'rgba(93,255,158,.6)', w: 700, ls: 2 });
+      return;
+    }
     c.globalAlpha *= (b.falling ? b.fa : 1) * (b.a == null ? 1 : b.a);
     if (b.k === 'laser') {
       const on = !(b.blink && !b.lit);
@@ -253,10 +269,18 @@ class World {
     } else {
       c.fillRect(b.x, b.y, b.w, 3);
       c.shadowBlur = 0; c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(b.x, b.y, 1, b.h); c.fillRect(b.x + b.w - 1, b.y, 1, b.h);
+      if (b.k === 'fake' && this.st.brain) { c.strokeStyle = 'rgba(255,43,58,.7)'; c.setLineDash([4, 4]); c.lineWidth = 1.5; c.strokeRect(b.x + 2, b.y + 2, b.w - 4, Math.min(b.h, 30) - 4); txt(c, '?', b.x + b.w / 2, b.y + 20, { al: 'center', size: 12, col: COL.red, w: 700 }); }
     }
     c.restore();
   }
   drawSpike(c, s) {
+    if (s.on && s.hidden && this.st.brain) {
+      // piques cachées, vues par None
+      const n = Math.max(1, Math.round(s.w / 16)), tw = s.w / n;
+      c.save(); c.strokeStyle = 'rgba(255,43,58,.55)'; c.setLineDash([2, 3]); c.lineWidth = 1; c.beginPath();
+      for (let i = 0; i < n; i++) { const x = s.x + i * tw; c.moveTo(x, s.y); c.lineTo(x + tw / 2, s.y - 12); c.lineTo(x + tw, s.y); }
+      c.stroke(); c.restore();
+    }
     if (!s.on || s.pop <= 0) return;
     const n = Math.max(1, Math.round(s.w / 16)), tw = s.w / n, h = 14 * s.pop;
     c.save(); c.fillStyle = '#d9d2e3'; c.shadowColor = '#ff2b3a'; c.shadowBlur = 8;
