@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--PAGE-->
+<title>Golden Roi du Ragebait</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Grenze+Gotisch:wght@500;700;900&display=swap">
+<style>
+  :root { color-scheme: dark; --bg: #050407; --gold: #f2c14e; --ink: #ece8f4; }
+  html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
+  body { font-family: "Chakra Petch", system-ui, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; touch-action: none; }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, #140a10 0%, #050407 70%); }
+  #cv { display: block; box-shadow: 0 0 80px rgba(0,0,0,.9), 0 0 0 1px rgba(242,193,78,.14); outline: none; }
+  #touch { position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: space-between; padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; }
+  #touch .grp { display: flex; gap: 10px; pointer-events: auto; }
+  #touch button { width: 62px; height: 62px; border-radius: 50%; border: 1px solid rgba(242,193,78,.5); background: rgba(10,8,14,.55); color: var(--gold); font: 700 20px "Chakra Petch", sans-serif; touch-action: none; }
+  @media (pointer: coarse) { #touch.on { display: flex; } }
+  #fonts { position: absolute; left: -999px; top: 0; font-family: "Grenze Gotisch"; }
+  #fonts b { font-family: "Chakra Petch"; }
+</style>
+<!--/PAGE-->
+</head>
+<body>
+<!--BODY-->
+<div id="wrap"><canvas id="cv" width="960" height="540" aria-label="Golden, le roi du ragebait : jeu"></canvas></div>
+<div id="touch">
+  <div class="grp"><button data-k="ArrowLeft" aria-label="Gauche">◀</button><button data-k="ArrowRight" aria-label="Droite">▶</button></div>
+  <div class="grp"><button data-k="KeyX" aria-label="Action">✦</button><button data-k="Space" aria-label="Sauter">▲</button></div>
+</div>
+<div id="fonts" aria-hidden="true">oi <b>oi</b></div>
+<script src="js/engine.js"></script>
+<script src="js/chars.js"></script>
+<script src="js/plat.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/lv1-3.js"></script>
+<script src="js/lv4-6.js"></script>
+<script src="js/lv7-8.js"></script>
+<script src="js/lv9-10.js"></script>
+<script src="js/boss.js"></script>
+<script src="js/menus.js"></script>
+<!--/BODY-->
+</body>
+</html>
