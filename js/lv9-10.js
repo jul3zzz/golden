@@ -288,7 +288,7 @@ function duelBg(c, t, me, gold, goal) {
 const doorsPhase = L => ({
   init() {
     const m = L.m; this.pro = m.pro || (m.pro = new Prophet(['G', 'D'], h => h.length ? (h[h.length - 1] === 'G' ? 'D' : 'G') : 'D'));
-    this.me = 0; this.gold = 0; this.goalMe = 12; this.goalG = L.pity ? 16 : 12; this.t = 0; this.rev = 0; this.pred = this.pro.predict(); this.last = null;
+    this.me = 0; this.gold = 0; this.goalMe = 10; this.goalG = L.pity ? 16 : 12; this.t = 0; this.rev = 0; this.pred = this.pro.predict(); this.last = null;
   },
   pick(x) {
     this.last = x; const hit = x === this.pred;

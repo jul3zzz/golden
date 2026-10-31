@@ -193,7 +193,7 @@ function runPhase(cfg) {
       if (K.jumpHit() || (G.mouse.click && G.mouse.y < 488)) {
         G.mouse.click = false;
         if (this.ground) { this.vy = -620; this.ground = false; this.jumps = 1; A.jump(); }
-        else if (this.cur === 'mitty' && this.jumps < 2) { this.vy = -580; this.jumps = 2; A.jump(1.3); P.burst(200, this.y, 8, CH.mitty.col, 120, .4); }
+        else if (this.cur === 'mitty' && this.jumps < 2) { this.vy = -600; this.jumps = 2; A.jump(1.3); P.burst(200, this.y, 8, CH.mitty.col, 120, .4); }
       }
       const gap = this.overGap(px);
       const glide = gap && this.cur === 'none' && this.y >= GY - 1 && this.vy >= 0;
@@ -217,7 +217,7 @@ function runPhase(cfg) {
             else return L.die(`Il fallait ${CH[need].name}. La forme ne ment jamais.`);
           }
         }
-        if (o.k === 'high' && U.rr(box, { x: o.x, y: GY - 170, w: 40, h: 170 })) return L.die('Mur haut : seule Mitty a le double saut.');
+        if (o.k === 'high' && U.rr(box, { x: o.x, y: GY - 135, w: 40, h: 135 })) return L.die('Mur haut : seule Mitty a le double saut.');
         if (o.k === 'plate') {
           if (!o.open && this.ground && this.cur === 'jules' && px > o.x && px < o.x + 70) { o.open = true; A.boom(); G.shake = 6; }
           if (!o.open && U.rr(box, { x: o.x + 300, y: 30, w: 30, h: GY - 30 })) return L.die('La porte est restée fermée. Seul Jules est assez lourd pour la plaque.');
@@ -244,7 +244,7 @@ function runPhase(cfg) {
         if (o.k === 'brick' && !o.broken) { c.fillStyle = '#1c0f06'; c.fillRect(o.x, 30, 44, GY - 30); c.strokeStyle = 'rgba(255,138,31,.45)'; for (let y = 30; y < GY; y += 18) c.strokeRect(o.x + .5, y + .5, 43, 18); }
         if (o.k === 'laser') { c.save(); c.fillStyle = 'rgba(255,43,58,.45)'; c.shadowColor = COL.red; c.shadowBlur = 18; c.fillRect(o.x, 30, 14, GY - 30); c.fillStyle = '#fff'; c.fillRect(o.x + 6, 30, 2, GY - 30); c.restore(); tagX = o.x + 7; }
         if (o.k === 'fog') { for (let i = 0; i < 9; i++) { const g = c.createRadialGradient(o.x + 35, 60 + i * 44, 2, o.x + 35, 60 + i * 44, 46); g.addColorStop(0, 'rgba(0,0,0,.95)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(o.x - 15, 14 + i * 44, 100, 92); } c.strokeStyle = 'rgba(255,255,255,.08)'; c.strokeRect(o.x, 30, 70, GY - 30); tagX = o.x + 35; }
-        if (o.k === 'high') { c.fillStyle = '#100d16'; c.fillRect(o.x, GY - 170, 40, 170); c.fillStyle = '#efeaf7'; c.fillRect(o.x, GY - 170, 40, 2); }
+        if (o.k === 'high') { c.fillStyle = '#100d16'; c.fillRect(o.x, GY - 135, 40, 135); c.fillStyle = '#efeaf7'; c.fillRect(o.x, GY - 135, 40, 2); }
         if (o.k === 'plate') {
           c.fillStyle = o.open ? '#3dff7a' : '#6f8cff'; c.fillRect(o.x, GY - 6, 70, 6);
           const gh = o.open ? 60 : GY - 30; c.fillStyle = '#14101c'; c.fillRect(o.x + 300, 30, 30, gh); c.strokeStyle = '#6f8cff'; c.strokeRect(o.x + 300.5, 30.5, 29, gh);
@@ -252,8 +252,8 @@ function runPhase(cfg) {
         }
         if (o.k === 'gap') tagX = o.x + 240;
         if (!(o.k === 'brick' && o.broken)) {
-          headIcon(c, who, tagX, o.k === 'high' ? GY - 200 : o.k === 'gap' ? GY - 60 : 70, 15, { ringCol: col });
-          txt(c, OBS[o.k].name, tagX, o.k === 'high' ? GY - 222 : o.k === 'gap' ? GY - 82 : 100, { al: 'center', size: 10, col, w: 700, ls: 2 });
+          headIcon(c, who, tagX, o.k === 'high' ? GY - 165 : o.k === 'gap' ? GY - 60 : 70, 15, { ringCol: col });
+          txt(c, OBS[o.k].name, tagX, o.k === 'high' ? GY - 187 : o.k === 'gap' ? GY - 82 : 100, { al: 'center', size: 10, col, w: 700, ls: 2 });
         }
       }
       c.restore();

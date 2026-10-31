@@ -6,6 +6,7 @@
    ========================================================= */
 function mazePhase(cfg) {
   return L => ({
+    cfg,
     init() { this.st = 'wait'; this.t = 0; this.trail = []; this.pv = null; this.spd = 0; this.w = cfg.w + (L.pity ? 10 : 0); this.max = cfg.maxSpd ? cfg.maxSpd * (L.pity ? 1.4 : 1) : 0; },
     eff() {
       const m = G.mouse;
@@ -93,7 +94,13 @@ LEVELS.push({
     {
       name: 'Les Barres Rouges', proph: 'Tu vas attendre. Puis tu vas te précipiter. Mauvais ordre.', make: mazePhase({
         w: 32, pts: [[70, 90], [250, 90], [250, 450], [420, 450], [420, 90], [590, 90], [590, 450], [760, 450], [760, 270], [900, 270]],
-        bars: [{ x: 225, y: 265, w: 50, h: 10, ax: 'y', amp: 150, spd: 1.6 }, { x: 395, y: 265, w: 50, h: 10, ax: 'y', amp: 150, spd: 2.1, ph: 1 }, { x: 565, y: 265, w: 50, h: 10, ax: 'y', amp: 150, spd: 2.6, ph: 2 }, { x: 825, y: 245, w: 10, h: 50, ax: 'x', amp: 55, spd: 3 }]
+        // portes qui coulissent en travers du couloir : on passe quand elles sont ouvertes
+        bars: [
+          { x: 220, y: 265, w: 60, h: 10, ax: 'x', amp: 78, spd: 1.8 },
+          { x: 390, y: 330, w: 60, h: 10, ax: 'x', amp: 78, spd: 2.2 }, { x: 390, y: 190, w: 60, h: 10, ax: 'x', amp: 78, spd: 2.2, ph: Math.PI },
+          { x: 560, y: 200, w: 60, h: 10, ax: 'x', amp: 78, spd: 2.6, ph: 1 }, { x: 560, y: 340, w: 60, h: 10, ax: 'x', amp: 78, spd: 2.6, ph: 2.6 },
+          { x: 825, y: 240, w: 10, h: 60, ax: 'y', amp: 78, spd: 3 }
+        ]
       })
     },
     { name: 'Le Miroir', proph: 'Ta main ira à gauche quand tu voudras aller à droite. Ton cerveau va fondre.', tip: 'Gauche et droite sont inversées. Haut et bas, non.', make: mazePhase({ w: 40, mirror: true, pts: [[880, 470], [880, 300], [640, 300], [640, 470], [400, 470], [400, 110], [150, 110], [150, 420], [60, 420]] }) },

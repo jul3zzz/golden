@@ -42,7 +42,7 @@ class Bullet {
 function bossPhase(cfg) {
   return L => ({
     init() {
-      this.w = new World({ char: CH_ORDER[0], start: [200, 460], eyes: false, noDie: true, blocks: [Bk(0, 460, 960, 80), Bk(150, 340, 150, 14), Bk(660, 340, 150, 14)] });
+      this.w = new World({ char: CH_ORDER[0], start: [200, 460], eyes: false, noDie: true, blocks: [Bk(0, 460, 960, 80), Bk(150, 385, 150, 14), Bk(660, 385, 150, 14)] });
       this.w.hurtCb = () => this.hurt();
       this.li = 0; this.t = 0; this.cd = 0; this.flip = 0; this.haz = []; this.shots = [];
       this.g = { x: 480, y: 210, hp: cfg.hp || 1, max: cfg.hp || 1, vul: 0, flash: 0, dash: null };
@@ -164,7 +164,7 @@ function bossPhase(cfg) {
       this.haz = this.haz.filter(h => !h.gone);
       const bx = w.box();
       for (const h of this.haz) if (h.hurt(bx)) this.hurt();
-      if (g.dash && g.dash.t > .7 && U.rr(bx, { x: g.x - 24, y: g.y - 100, w: 48, h: 100 })) this.hurt();
+      if (g.dash && g.dash.t > .7 && U.rr(bx, { x: g.x - 24, y: g.y - 68, w: 48, h: 68 })) this.hurt();
       if (this.mode === 'fight' && g.hp <= 0 && !this.ending) {
         this.ending = 1.8; this.haz = []; g.vul = 0; A.boom(); G.shake = 18;
         P.burst(g.x, g.y - 60, 80, COL.gold, 400, 1.2); this.say(cfg.endLine, 2.2);
@@ -181,8 +181,8 @@ function bossPhase(cfg) {
         return;
       }
       if (g.dash && g.dash.t <= .7) {
-        c.save(); c.strokeStyle = `rgba(255,43,58,${.4 + .4 * Math.sin(this.t * 30)})`; c.setLineDash([12, 8]); c.lineWidth = 3; c.strokeRect(0, g.y - 100, W, 100); c.restore();
-        txt(c, 'PRÉDICTION', g.dash.dir < 0 ? W - 120 : 120, g.y - 108, { al: 'center', size: 12, col: COL.red, w: 700, ls: 3 });
+        c.save(); c.strokeStyle = `rgba(255,43,58,${.4 + .4 * Math.sin(this.t * 30)})`; c.setLineDash([12, 8]); c.lineWidth = 3; c.strokeRect(0, g.y - 68, W, 68); c.restore();
+        txt(c, 'PRÉDICTION', g.dash.dir < 0 ? W - 120 : 120, g.y - 76, { al: 'center', size: 12, col: COL.red, w: 700, ls: 3 });
       }
       goldenAura(c, g.x, g.y, 2.4, this.t, g.vul > 0 ? .5 : 1);
       if (g.vul > 0) { c.save(); c.strokeStyle = COL.gold; c.shadowColor = COL.gold; c.shadowBlur = 20; c.lineWidth = 2; c.beginPath(); c.arc(g.x, g.y - 60, 46 + 3 * Math.sin(this.t * 10), 0, 7); c.stroke(); c.restore(); }

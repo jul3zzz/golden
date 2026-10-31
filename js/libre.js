@@ -273,8 +273,10 @@ const FREE_LEVELS = [
           pre: (dt, w) => {
             w.sT -= dt;
             if (w.sT <= 0) {
-              w.n++; w.sT = (L.pity ? 1.25 : .95) - Math.min(.25, w.t * .006);
-              const p = w.p, lead = .75, x = w.n % 4 === 0 ? p.x : U.clamp(p.x + p.vx * lead, 30, W - 30);
+              // les persos lents ont plus de temps pour esquiver
+              const k = Math.max(1, 255 / w.st.spd);
+              w.n++; w.sT = ((L.pity ? 1.25 : .95) - Math.min(.25, w.t * .006)) * k;
+              const p = w.p, lead = .75 * k, x = w.n % 4 === 0 ? p.x : U.clamp(p.x + p.vx * lead, 30, W - 30);
               w.ents.push(new Strike(x, lead));
             }
             if (w.t >= 26) w.won = true;
@@ -290,7 +292,7 @@ const FREE_LEVELS = [
         make: L => {
           const spawn = Bk(0, 460, 130, 80);
           const stairs = [Bk(380, 400, 80, 14), Bk(500, 340, 80, 14), Bk(620, 280, 80, 14), Bk(740, 220, 220, 14)];
-          const sp = Sp(250, 460, 64, 'up', { hidden: true });
+          const sp = Sp(258, 460, 48, 'up', { hidden: true });
           return platPhase({
             char: FREE.char, start: [60, 460], blocks: [spawn, Bk(130, 460, 830, 80), ...stairs], spikes: [sp],
             exit: [905, 220], exitFake: true,

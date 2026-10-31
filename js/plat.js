@@ -322,6 +322,7 @@ class World {
 /* phase de plateforme : d = options du World + crochets init/pre/post/over/onDie */
 function platPhase(d) {
   return {
+    d,
     init(L) { this.w = new World(d); if (d.init) d.init(this.w, L); },
     update(dt, L) {
       const w = this.w;

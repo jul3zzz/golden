@@ -83,7 +83,7 @@ LEVELS.push({
       make: L => {
         const spawn = Bk(0, 460, 130, 80);
         const stairs = [Bk(400, 400, 80, 14), Bk(520, 340, 80, 14), Bk(640, 280, 80, 14), Bk(760, 220, 200, 14)];
-        const sp = Sp(250, 460, 64, 'up', { hidden: true });
+        const sp = Sp(258, 460, 48, 'up', { hidden: true });
         return platPhase({
           char: 'jules', start: [60, 460], blocks: [spawn, Bk(130, 460, 830, 80), ...stairs], spikes: [sp],
           exit: [905, 220], exitFake: true,
@@ -360,7 +360,7 @@ LEVELS.push({
 /* =========================================================
    NIVEAU 3 — FANTA — Trop de Muscle (jauges, pression, bras de fer)
    ========================================================= */
-const WALLS = [{ zw: .22, sp: .75 }, { zw: .18, sp: .95 }, { zw: .15, sp: 1.15 }, { zw: .14, sp: 1.15, rev: 1 }, { zw: .13, sp: 1.0, mv: 1 }, { zw: .12, sp: 1.45 }, { zw: .11, sp: 1.1, fake: 1 }];
+const WALLS = [{ zw: .22, sp: .75 }, { zw: .18, sp: .95 }, { zw: .15, sp: 1.15 }, { zw: .14, sp: 1.15, rev: 1 }, { zw: .13, sp: 1.0, mv: 1 }, { zw: .13, sp: 1.25 }, { zw: .11, sp: 1.1, fake: 1 }];
 
 function gymBg(c, t) {
   c.fillStyle = '#09070c'; c.fillRect(0, 0, W, H);
@@ -479,9 +479,9 @@ const wrestlePhase = L => ({
     if (this.times.length >= 7 && this.t - this.times[this.times.length - 1] < .5) {
       const iv = []; for (let i = 1; i < this.times.length; i++) iv.push(this.times[i] - this.times[i - 1]);
       const m = iv.reduce((a, b) => a + b, 0) / iv.length, sd = Math.sqrt(iv.reduce((a, b) => a + (b - m) ** 2, 0) / iv.length);
-      this.pred = sd / m < .2;
+      this.pred = sd / m < .1;
     }
-    if (this.t > 1.5) this.v -= (this.pred ? 74 : (L.pity ? 24 : 31)) * dt;
+    if (this.t > 1.5) this.v -= (this.pred ? 40 : (L.pity ? 18 : 24)) * dt;
     if (this.v >= 100) return L.win();
     if (this.v <= -100) L.die(this.pred ? 'Golden a lu ton rythme. Trop régulier.' : 'Bras plié. Golden n\'a même pas posé son café.');
   },
@@ -520,6 +520,6 @@ LEVELS.push({
   phases: [
     { name: 'Les Sept Murs', proph: 'Tu vas réussir les trois premiers murs. Au quatrième, la jauge va te mentir.', make: gaugePhase },
     { name: 'La Canette', proph: 'Tu vas trop secouer. Je le sais parce que je vais secouer avec toi.', make: canPhase },
-    { name: 'Bras de Fer', proph: 'Ton rythme est un livre ouvert. Je le lis en buvant mon café.', tip: 'Varie ta cadence : un rythme parfaitement régulier double la force de Golden.', make: wrestlePhase }
+    { name: 'Bras de Fer', proph: 'Ton rythme est un livre ouvert. Je le lis en buvant mon café.', tip: 'Alterne vite ← →, mais pas comme un métronome : un rythme parfaitement régulier rend Golden bien plus fort.', make: wrestlePhase }
   ]
 });
