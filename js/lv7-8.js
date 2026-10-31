@@ -141,6 +141,7 @@ const Q = {
 LEVELS.push({
   id: 7, host: 'golden', title: 'Le QCM du Roi', sub: 'Quiz piégé', quoteBy: 'Golden',
   quote: 'Dix-huit questions. Une seule règle : la bonne réponse, c\'est celle que je veux.',
+  tcontrols: 'Touche la bonne réponse avant la fin du chrono  ·  une erreur = retour au début de la série',
   controls: 'Souris : clique sur la bonne réponse avant la fin du chrono  ·  une erreur = retour au début de la série',
   freed: 'Tu as survécu au QCM. Golden note ta moyenne : 0/20, par principe.',
   taunts: ['Mauvaise réponse. Comme prévu.', 'Tu as lu la question ? Non.', 'Zéro. Pointé.'],
@@ -199,7 +200,7 @@ function runPhase(cfg) {
       const glide = gap && this.cur === 'none' && this.y >= GY - 1 && this.vy >= 0;
       if (glide) { this.vy = 0; this.y = GY; this.ground = true; this.jumps = 0; if (Math.random() < .4) P.burst(196, GY - 50, 1, CH.none.col, 50, .5, 2, -40); }
       else {
-        this.vy += (K.jump() && this.vy < 0 ? 1900 : 3400) * dt;
+        this.vy += ((K.jump() || (G.mouse.down && G.mouse.y < 488)) && this.vy < 0 ? 1900 : 3400) * dt;
         this.y += this.vy * dt;
         if (!gap && this.y >= GY) { if (!this.ground) A.land(); this.y = GY; this.vy = 0; this.ground = true; this.jumps = 0; }
         else this.ground = false;
@@ -273,6 +274,7 @@ function runPhase(cfg) {
 LEVELS.push({
   id: 8, host: 'golden', cast: CH_ORDER, title: 'La Course des Six', sub: 'Course avec changement de personnage', quoteBy: 'les six',
   quote: 'Chacun son obstacle. Il suffit de changer de personnage au bon moment. Facile.',
+  tcontrols: 'Touche les portraits en bas : changer de personnage  ·  touche le haut de l’écran : sauter (garde le doigt pour sauter plus haut)',
   controls: 'Touches 1 à 6 (ou clic sur les portraits) : changer de personnage  ·  Espace / Z / clic : sauter',
   freed: 'Les six ont couru ensemble. Golden a chronométré. Il n\'est pas impressionné.',
   taunts: ['Mauvais personnage. Bon timing pour mourir.', 'Tu as paniqué sur le 4. Je l\'avais noté.', 'Six amis. Zéro coordination.'],

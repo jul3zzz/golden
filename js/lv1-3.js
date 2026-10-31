@@ -33,6 +33,7 @@ function drawFlag(c, x, y, t) {
 LEVELS.push({
   id: 1, host: 'jules', title: 'Le Poids du Roi', sub: 'Plateformes piégées',
   quote: "J'suis pas gros. C'est le sol qui est faible.",
+  tcontrols: '◀ ▶ : bouger  ·  ▲ : sauter (garde le doigt pour sauter plus haut)',
   controls: '← → ou Q D : bouger  ·  Espace, Z ou ↑ : sauter (maintiens pour sauter plus haut)',
   freed: 'Jules est libéré. Le sol, lui, ne s\'en remettra pas.',
   taunts: ['Le sol a cédé. Comme ta dignité.', 'Jules a cassé le sol. Le sol a gagné.', 'Une porte, ça bouge. Tout le monde sait ça.'],
@@ -300,6 +301,7 @@ function pathPhase(L) {
   }
   const path = L.m.path, key = p => p.join(), onPath = new Set(path.map(key));
   return {
+    touch: 'pad',
     init() { this.t = 0; this.st = 'show'; this.show = L.pity ? 4.5 : L.m.show; this.i = 0; this.p = path[0].slice(); this.trail = [key(path[0])]; this.crack = null; },
     onDie() { L.m.show = Math.max(1.5, L.m.show - .35); },
     update(dt) {
@@ -336,7 +338,7 @@ function pathPhase(L) {
       txt(c, 'FIN', OX + e[0] * CS + CS / 2, OY + e[1] * CS + CS / 2 + 5, { al: 'center', size: 13, col: COL.gold, w: 700 });
       if (this.crack) { c.save(); c.strokeStyle = COL.red; c.lineWidth = 3; const px = OX + this.crack[0] * CS, py = OY + this.crack[1] * CS; seg(c, px + 10, py + 10, px + CS - 10, py + CS - 10); seg(c, px + CS - 10, py + 10, px + 10, py + CS - 10); c.restore(); }
       drawStick(c, 'none', OX + this.p[0] * CS + CS / 2, OY + this.p[1] * CS + CS - 8, { s: .9, t: this.t, brain: 14 });
-      txt(c, show ? `Mémorise le chemin…  ${Math.max(0, this.show - this.t).toFixed(1)} s` : 'Refais le chemin de mémoire (flèches). Une case fausse = mort.', 480, 70, { al: 'center', size: show ? 22 : 15, f: show ? 'd' : 'u', col: show ? COL.gold : COL.ink, w: show ? 900 : 600 });
+      txt(c, show ? `Mémorise le chemin…  ${Math.max(0, this.show - this.t).toFixed(1)} s` : 'Refais le chemin de mémoire (' + (G.touch ? 'flèches à l’écran' : 'flèches') + '). Une case fausse = mort.', 480, 70, { al: 'center', size: show ? 22 : 15, f: show ? 'd' : 'u', col: show ? COL.gold : COL.ink, w: show ? 900 : 600 });
       if (show) { c.fillStyle = hexA(COL.gold, .6); c.fillRect(380, 84, 200 * Math.max(0, 1 - this.t / this.show), 3); }
       txt(c, `Temps d'affichage : ${this.show.toFixed(1)} s`, 480, 520, { al: 'center', size: 12, col: COL.dim });
     }
@@ -346,6 +348,7 @@ function pathPhase(L) {
 LEVELS.push({
   id: 2, host: 'none', title: 'Le Cerveau en Surchauffe', sub: 'Énigmes et mémoire',
   quote: "J'ai le plus gros cerveau de la bande. Le problème, c'est qu'il réfléchit trop.",
+  tcontrols: 'Touche les neurones et les cases  ·  flèches à l’écran : refaire le chemin',
   controls: 'Clic, flèches ou 1-4 : choisir un neurone  ·  souris : allumer les cases  ·  flèches : refaire le chemin',
   freed: 'None est libéré. Son cerveau a pris trois tailles. Il refuse de mettre un bonnet.',
   taunts: ['Gros cerveau. Petite mémoire.', 'Tu as réfléchi trop longtemps. Ou pas assez.', 'Ton cerveau a planté. Le mien, jamais.', 'Je connaissais la séquence avant toi.'],
@@ -415,7 +418,7 @@ const gaugePhase = L => ({
     c.save(); c.fillStyle = '#fff'; c.shadowColor = '#fff'; c.shadowBlur = 10; c.fillRect(gx + this.u * gw - 2, gy - 6, 4, 28); c.restore();
     txt(c, 'FAIBLE', gx, gy - 20, { size: 10, col: COL.dim, ls: 2 }); txt(c, 'TROP FORT', gx + gw, gy - 20, { al: 'right', size: 10, col: COL.dim, ls: 2 });
     txt(c, `MUR ${Math.min(this.k + 1, WALLS.length)} / ${WALLS.length}`, 480, 70, { al: 'center', size: 13, col: '#ff8a1f', w: 700, ls: 3 });
-    txt(c, 'Arrête la jauge dans la bonne zone : Espace, X ou clic', 480, 96, { al: 'center', size: 15, col: COL.ink });
+    txt(c, G.touch ? 'Arrête la jauge dans la bonne zone : touche l’écran' : 'Arrête la jauge dans la bonne zone : Espace, X ou clic', 480, 96, { al: 'center', size: 15, col: COL.ink });
     if (this.fz != null) txt(c, 'Golden a repeint la jauge.', 480, 120, { al: 'center', size: 14, it: true, col: COL.red });
   }
 });
@@ -460,12 +463,13 @@ const canPhase = L => ({
     c.save(); c.strokeStyle = 'rgba(255,255,255,.1)'; c.lineWidth = 8; c.beginPath(); c.arc(800, 280, 46, 0, 7); c.stroke();
     c.strokeStyle = '#3dff7a'; c.shadowColor = '#3dff7a'; c.shadowBlur = 12; c.beginPath(); c.arc(800, 280, 46, -Math.PI / 2, -Math.PI / 2 + pr * Math.PI * 2); c.stroke(); c.restore();
     txt(c, (this.need - this.hold).toFixed(1) + ' s', 800, 286, { al: 'center', size: 18, col: COL.ink, w: 700 });
-    txt(c, 'Tapote Espace / clic pour garder la pression dans la zone verte', 480, 70, { al: 'center', size: 15, col: COL.ink });
+    txt(c, G.touch ? 'Tapote l’écran pour garder la pression dans la zone verte' : 'Tapote Espace / clic pour garder la pression dans la zone verte', 480, 70, { al: 'center', size: 15, col: COL.ink });
     txt(c, `${Math.max(0, 45 - this.t).toFixed(0)} s avant que la canette tiédisse`, 480, 94, { al: 'center', size: 12, col: COL.dim });
   }
 });
 
 const wrestlePhase = L => ({
+  touch: 'lr',
   init() { this.v = 0; this.last = null; this.times = []; this.pred = false; this.t = 0; },
   update(dt) {
     this.t += dt;
@@ -504,7 +508,7 @@ const wrestlePhase = L => ({
     c.fillRect(Math.min(mid, mid + this.v / 100 * bw / 2), 470, Math.abs(this.v / 100 * bw / 2), 12);
     c.fillStyle = '#fff'; c.fillRect(mid - 1, 464, 2, 24);
     txt(c, 'FANTA', bx, 462, { size: 11, col: '#ff8a1f', w: 700, ls: 2 }); txt(c, 'GOLDEN', bx + bw, 462, { al: 'right', size: 11, col: COL.gold, w: 700, ls: 2 });
-    txt(c, 'Alterne ← → (ou Q D) le plus vite possible', 480, 70, { al: 'center', size: 16, col: COL.ink });
+    txt(c, G.touch ? 'Alterne ◀ ▶ le plus vite possible' : 'Alterne ← → (ou Q D) le plus vite possible', 480, 70, { al: 'center', size: 16, col: COL.ink });
     txt(c, 'Golden prédit les rythmes trop réguliers.', 480, 94, { al: 'center', size: 13, col: COL.dim });
     if (this.pred) txt(c, 'PRÉDIT : TON RYTHME EST RÉGULIER', 480, 150, { al: 'center', size: 26, f: 'd', col: COL.red, w: 900, glow: COL.red, a: .6 + .4 * Math.sin(this.t * 20) });
     if (this.t < 1.5) txt(c, 'PRÊT…', 480, 200, { al: 'center', size: 40, f: 'd', col: COL.gold, w: 900 });
@@ -514,6 +518,7 @@ const wrestlePhase = L => ({
 LEVELS.push({
   id: 3, host: 'fanta', title: 'Trop de Muscle', sub: 'Jauges, pression et bras de fer',
   quote: "J'ai trop de force. C'est ça, mon vrai problème.",
+  tcontrols: 'Touche l’écran : frapper / secouer  ·  ◀ puis ▶ en alternance : bras de fer',
   controls: 'Espace, X ou clic : frapper / secouer  ·  ← → (ou Q D) : bras de fer',
   freed: 'Fanta est libéré. Il a cassé la porte en sortant.',
   taunts: ['Trop fort, trop faible. Jamais juste.', 'Des muscles, zéro timing.', 'Même ta force est prévisible.'],

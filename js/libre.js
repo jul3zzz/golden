@@ -317,6 +317,7 @@ const FREE_LEVELS = [
 FREE_LEVELS.forEach((lv, i) => {
   Object.assign(lv, {
     free: true, tag: 'LIBRE ' + (i + 1), quoteBy: 'Golden', idx: i,
+    tcontrols: '◀ ▶ : bouger  ·  ▲ : sauter  ·  ✦ : capacité (Fanta frappe, Norowareta phase)',
     controls: '← → ou Q D : bouger  ·  Espace, Z ou ↑ : sauter  ·  X ou Maj : capacité (Fanta frappe, Norowareta phase)',
     back: () => new FreeScene()
   });

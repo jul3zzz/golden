@@ -8,8 +8,10 @@ function mazePhase(cfg) {
   return L => ({
     cfg,
     init() { this.st = 'wait'; this.t = 0; this.trail = []; this.pv = null; this.spd = 0; this.w = cfg.w + (L.pity ? 10 : 0); this.max = cfg.maxSpd ? cfg.maxSpd * (L.pity ? 1.4 : 1) : 0; },
+    /* au doigt : le point suit les glissements (le doigt peut être n'importe où, il ne cache rien) */
     eff() {
       const m = G.mouse;
+      if (m.type === 'touch') { const p = this.tp; return p && p.x >= 0 && p.x <= W && p.y >= 0 && p.y <= H ? p : null; }
       if (m.x < 0 || m.x > W || m.y < 0 || m.y > H) return null;
       return cfg.mirror ? { x: W - m.x, y: m.y } : { x: m.x, y: m.y };
     },
@@ -18,6 +20,13 @@ function mazePhase(cfg) {
     },
     update(dt) {
       this.t += dt;
+      const m = G.mouse, s0 = cfg.pts[0];
+      if (m.type === 'touch') {
+        if (this.st === 'wait') { if (m.click) { m.click = false; this.tp = { x: s0[0], y: s0[1] }; this.anc = [m.x, m.y]; this.st = 'go'; this.pv = this.tp; A.blip(); } return; }
+        if (!m.down) this.anc = null;
+        else if (!this.anc) this.anc = [m.x, m.y];
+        else { this.tp = { x: this.tp.x + (m.x - this.anc[0]) * (cfg.mirror ? -1 : 1), y: this.tp.y + m.y - this.anc[1] }; this.anc = [m.x, m.y]; }
+      }
       const e = this.eff(), s = cfg.pts[0], g = cfg.pts[cfg.pts.length - 1];
       if (this.st === 'wait') {
         if (e && U.dist(e.x, e.y, s[0], s[1]) < 20 && (G.mouse.click || G.mouse.down)) { G.mouse.click = false; this.st = 'go'; this.pv = e; A.blip(); }
@@ -77,7 +86,7 @@ function mazePhase(cfg) {
         c.beginPath(); c.arc(e.x, e.y, 4, 0, 7); c.fill(); seg(c, e.x - 9, e.y, e.x - 6, e.y); seg(c, e.x + 6, e.y, e.x + 9, e.y); seg(c, e.x, e.y - 9, e.x, e.y - 6); seg(c, e.x, e.y + 6, e.x, e.y + 9);
         c.restore();
       }
-      if (this.st === 'wait') txt(c, cfg.mirror ? 'Clique sur le DÉPART… avec une souris qui va à l\'envers' : 'Clique sur le DÉPART, puis suis le fil sans toucher les murs', 480, 524, { al: 'center', size: 14, col: COL.ink, a: .6 + .4 * Math.sin(this.t * 4) });
+      if (this.st === 'wait') txt(c, G.touch ? (cfg.mirror ? 'Touche l’écran, puis glisse ton doigt n’importe où… gauche et droite inversées' : 'Touche l’écran, puis glisse ton doigt n’importe où : le point suit') : cfg.mirror ? 'Clique sur le DÉPART… avec une souris qui va à l\'envers' : 'Clique sur le DÉPART, puis suis le fil sans toucher les murs', 480, 524, { al: 'center', size: 14, col: COL.ink, a: .6 + .4 * Math.sin(this.t * 4) });
       if (this.max) { const r = Math.min(1, this.spd / this.max); c.fillStyle = 'rgba(255,255,255,.08)'; c.fillRect(800, 512, 140, 6); c.fillStyle = r > .8 ? COL.red : '#ff5fa2'; c.fillRect(800, 512, 140 * r, 6); txt(c, 'VITESSE', 800, 506, { size: 10, col: COL.dim, ls: 2 }); }
     }
   });
@@ -86,6 +95,7 @@ function mazePhase(cfg) {
 LEVELS.push({
   id: 4, host: 'mitty', title: 'Le Fil de Mitty', sub: 'Labyrinthe à la souris',
   quote: "Calme. Respire. Et surtout, ne touche pas les murs. La GOAT ne touche jamais les murs.",
+  tcontrols: 'Touche l’écran puis glisse ton doigt n’importe où : le point suit tes glissements sans toucher les bords. Lever le doigt ne tue pas.',
   controls: 'Souris (ou doigt) : clique sur le départ et guide le fil jusqu\'à Mitty sans toucher les bords',
   freed: 'Mitty est libérée. La GOAT refuse de parler de la phase 3.',
   taunts: ['Ta main tremble. Je le vois d\'ici.', 'Un pixel. Il suffisait d\'un pixel.', 'Mitty est déçue. Moi, je suis ravi.'],
@@ -128,6 +138,7 @@ function fonduDraw(c, w, a, label) {
 LEVELS.push({
   id: 5, host: 'fondu', title: 'Fondu au Noir', sub: 'Plateformes de mémoire',
   quote: "Le noir, je connais. C'est la lumière qui me fait peur.",
+  tcontrols: '◀ ▶ : bouger  ·  ▲ : sauter  ·  attends sur une plateforme sûre pendant le noir',
   controls: '← → ou Q D : bouger  ·  Espace, Z ou ↑ : sauter  ·  attends sur une plateforme sûre pendant le noir',
   freed: 'Fondu est libéré. Sa kippa n\'a pas bougé d\'un millimètre.',
   taunts: ['Dans le noir, je vois tout. Toi, rien.', 'Tu as sauté dans le vide. Littéralement.', 'La mémoire, ce n\'est pas ton fort.'],
@@ -208,6 +219,7 @@ function glitchBars(c, k) {
 LEVELS.push({
   id: 6, host: 'noro', title: 'Signal Corrompu', sub: 'Plateformes glitchées',
   quote: "J'existe à 72 %. Les 28 % restants, c'est Golden qui les a.",
+  tcontrols: '◀ ▶ : bouger  ·  ▲ : sauter  ·  ✦ : phaser à travers les lasers (0,6 s)',
   controls: '← → ou Q D : bouger  ·  Espace / Z : sauter  ·  Maj ou X : phaser à travers les lasers (0,6 s)',
   freed: 'Norowareta est libéré. Enfin, 72 % de lui.',
   taunts: ['Signal perdu. Joueur aussi.', 'Tes anciennes versions te détestent.', 'Erreur 0xRAGE.'],

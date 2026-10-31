@@ -2,7 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#050407">
 <!--PAGE-->
 <title>Golden Roi du Ragebait</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,13 +15,32 @@
 <style>
   :root { color-scheme: dark; --bg: #050407; --gold: #f2c14e; --ink: #ece8f4; }
   html, body { height: 100%; margin: 0; background: var(--bg); overflow: hidden; }
-  body { font-family: "Chakra Petch", system-ui, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; touch-action: none; }
+  body { font-family: "Chakra Petch", system-ui, sans-serif; color: var(--ink); -webkit-user-select: none; user-select: none; touch-action: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
   #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 40%, #140a10 0%, #050407 70%); }
   #cv { display: block; box-shadow: 0 0 80px rgba(0,0,0,.9), 0 0 0 1px rgba(242,193,78,.14); outline: none; }
-  #touch { position: fixed; left: 0; right: 0; bottom: 0; display: none; justify-content: space-between; padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); pointer-events: none; }
-  #touch .grp { display: flex; gap: 10px; pointer-events: auto; }
-  #touch button { width: 62px; height: 62px; border-radius: 50%; border: 1px solid rgba(242,193,78,.5); background: rgba(10,8,14,.55); color: var(--gold); font: 700 20px "Chakra Petch", sans-serif; touch-action: none; }
-  @media (pointer: coarse) { #touch.on { display: flex; } }
+  /* boutons tactiles : posés dans les coins, translucides pour laisser voir le jeu */
+  #touch { position: fixed; inset: 0; pointer-events: none; --g: max(14px, env(safe-area-inset-left, 0px)); --gr: max(14px, env(safe-area-inset-right, 0px)); --gb: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  #touch .grp { position: absolute; bottom: var(--gb); display: none; gap: 12px; align-items: flex-end; pointer-events: auto; touch-action: none; }
+  #touch .L { left: var(--g); } #touch .R { right: var(--gr); }
+  #touch[data-mode="plat"] .plat, #touch[data-mode="lr"] .lr { display: flex; }
+  #touch .R.plat { flex-direction: column; align-items: center; gap: 10px; }
+  #touch[data-mode="pad"] .pad { display: grid; }
+  #touch button { width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid rgba(242,193,78,.45); background: rgba(10,8,14,.3); color: rgba(242,193,78,.9); font: 700 22px "Chakra Petch", sans-serif; touch-action: none; padding: 0; transition: transform .06s, background .06s, opacity .2s; }
+  #touch button.ghost { opacity: .22; }
+  #touch button.big { width: 74px; height: 74px; font-size: 28px; }
+  #touch button.on { background: rgba(242,193,78,.42); color: #050407; transform: scale(.93); }
+  #touch .pad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); gap: 2px; }
+  #touch .pad button { width: 54px; height: 54px; border-radius: 12px; font-size: 18px; }
+  #touch .pad [data-k="ArrowUp"] { grid-area: 1 / 2; } #touch .pad [data-k="ArrowLeft"] { grid-area: 2 / 1; }
+  #touch .pad [data-k="ArrowRight"] { grid-area: 2 / 3; } #touch .pad [data-k="ArrowDown"] { grid-area: 3 / 2; }
+  #touch .lr button { width: 92px; height: 92px; font-size: 32px; }
+  @media (max-height: 340px) { #touch button { width: 54px; height: 54px; } #touch button.big { width: 64px; height: 64px; } #touch .R.plat { gap: 6px; } #touch .lr button { width: 78px; height: 78px; } }
+  /* téléphone tenu droit : on demande de le tourner */
+  #rot { position: fixed; inset: 0; z-index: 5; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 24px; background: #050407; color: var(--gold); text-align: center; font: 600 18px "Chakra Petch", sans-serif; }
+  #rot svg { width: 86px; height: 86px; animation: tourne 2.2s ease-in-out infinite; }
+  #rot small { color: #8d869b; font-size: 14px; font-weight: 500; max-width: 300px; }
+  @keyframes tourne { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
+  @media (pointer: coarse) and (orientation: portrait) { #rot { display: flex; } }
   #fonts { position: absolute; left: -999px; top: 0; font-family: "Grenze Gotisch"; }
   #fonts b { font-family: "Chakra Petch"; }
 </style>
@@ -26,10 +49,14 @@
 <body>
 <!--BODY-->
 <div id="wrap"><canvas id="cv" width="960" height="540" aria-label="Golden, le roi du ragebait : jeu"></canvas></div>
-<div id="touch">
-  <div class="grp"><button data-k="ArrowLeft" aria-label="Gauche">◀</button><button data-k="ArrowRight" aria-label="Droite">▶</button></div>
-  <div class="grp"><button data-k="KeyX" aria-label="Action">✦</button><button data-k="Space" aria-label="Sauter">▲</button></div>
+<div id="touch" data-mode="">
+  <div class="grp L plat"><button data-k="ArrowLeft" aria-label="Gauche">◀</button><button data-k="ArrowRight" aria-label="Droite">▶</button></div>
+  <div class="grp R plat"><button data-k="KeyX" aria-label="Capacité">✦</button><button class="big" data-k="Space" aria-label="Sauter">▲</button></div>
+  <div class="grp L pad"><button data-k="ArrowUp" aria-label="Haut">▲</button><button data-k="ArrowLeft" aria-label="Gauche">◀</button><button data-k="ArrowRight" aria-label="Droite">▶</button><button data-k="ArrowDown" aria-label="Bas">▼</button></div>
+  <div class="grp L lr"><button data-k="ArrowLeft" aria-label="Gauche">◀</button></div>
+  <div class="grp R lr"><button data-k="ArrowRight" aria-label="Droite">▶</button></div>
 </div>
+<div id="rot"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4"/><path d="M29 43h6"/></svg>Tourne ton téléphone en paysage<small>Golden joue en grand écran. Ça ne changera rien au résultat, mais tu verras mieux ta défaite.</small></div>
 <div id="fonts" aria-hidden="true">oi <b>oi</b></div>
 <script src="js/engine.js"></script>
 <script src="js/chars.js"></script>

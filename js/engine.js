@@ -47,7 +47,28 @@ const G = {
   scene: null, next: null, fade: 1, shake: 0, flash: 0, flashCol: '#fff', hover: false, cursorNone: false, gp: null
 };
 G.go = s => { if (!G.next) G.next = s; };
-G.touchUI = on => { const el = document.getElementById('touch'); if (el) el.classList.toggle('on', !!on); };
+G.touch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+/* boutons tactiles : 'plat' (◀ ▶ ✦ ▲), 'pad' (4 flèches), 'lr' (◀ / ▶), false = cachés */
+G.touchMode = false;
+/* rend presque transparents les boutons posés sur ce qu'il faut voir (zones en coordonnées du jeu) */
+G.touchGhost = boxes => {
+  if (!G.touchMode) return;
+  const r = G.cv.getBoundingClientRect(), k = r.width / W;
+  document.querySelectorAll('#touch button').forEach(b => {
+    if (!b.offsetParent) return;
+    const q = b.getBoundingClientRect();
+    b.classList.toggle('ghost', boxes.some(o => r.left + o.x * k < q.right && r.left + (o.x + o.w) * k > q.left && r.top + o.y * k < q.bottom && r.top + (o.y + o.h) * k > q.top));
+  });
+};
+G.touchUI = mode => {
+  mode = G.touch ? (mode === true ? 'plat' : mode || false) : false;
+  if (mode === G.touchMode) return;
+  G.touchMode = mode;
+  const el = document.getElementById('touch'); if (!el) return;
+  el.dataset.mode = mode || '';
+  el.querySelectorAll('[data-k]').forEach(b => { G.down[b.dataset.k] = false; b.classList.remove('on'); });
+  G.tp && G.tp.clear();
+};
 
 const K = {
   left: () => !!(G.down.ArrowLeft || G.down.KeyA),
@@ -304,13 +325,37 @@ G.boot = first => {
   cv.addEventListener('pointerleave', () => { if (!G.mouse.down) { G.mouse.x = -999; G.mouse.y = -999; } });
   cv.addEventListener('wheel', e => { G.mouse.wheel += e.deltaY; e.preventDefault(); }, { passive: false });
   cv.addEventListener('contextmenu', e => e.preventDefault());
-  document.querySelectorAll('#touch [data-k]').forEach(b => {
-    const k = b.dataset.k;
-    const on = e => { e.preventDefault(); A.init(); G.down[k] = true; G.hit[k] = true; G.anyHit = true; };
-    const off = e => { e.preventDefault(); G.down[k] = false; };
-    b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off);
-    b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
-  });
+  /* chaque doigt tient au plus un bouton ; glisser d'un bouton à l'autre change de touche */
+  const tz = document.getElementById('touch'), held = G.tp = new Map();
+  const keyAt = e => { const b = document.elementFromPoint(e.clientX, e.clientY); return b && b.closest && b.closest('#touch [data-k]'); };
+  const sync = () => {
+    const bs = [...held.values()].filter(Boolean), on = new Set(bs.map(b => b.dataset.k));
+    tz.querySelectorAll('[data-k]').forEach(b => {
+      const k = b.dataset.k, was = !!G.down[k], now = on.has(k);
+      if (now && !was) { G.hit[k] = true; G.anyHit = true; }
+      if (was !== now) G.down[k] = now;
+      b.classList.toggle('on', bs.includes(b));
+    });
+  };
+  const move = e => {
+    if (!held.has(e.pointerId) && e.type !== 'pointerdown') return;
+    e.preventDefault();
+    const b = keyAt(e) || null;
+    if (held.get(e.pointerId) !== b || e.type === 'pointerdown') { held.set(e.pointerId, b); sync(); }
+  };
+  const up = e => { if (held.has(e.pointerId)) { held.delete(e.pointerId); sync(); } };
+  tz.addEventListener('pointerdown', e => { A.init(); full(); move(e); });
+  tz.addEventListener('pointermove', move);
+  addEventListener('pointerup', up); addEventListener('pointercancel', up);
+  /* téléphone : plein écran + paysage au premier toucher (Android ; ignoré sur iPhone) */
+  let tried = false;
+  const full = () => {
+    if (!G.touch || tried) return; tried = true;
+    const d = document.documentElement;
+    if (document.fullscreenElement || !d.requestFullscreen) return;
+    d.requestFullscreen({ navigationUI: 'hide' }).then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')).catch(() => { });
+  };
+  cv.addEventListener('pointerdown', full);
   try { speechSynthesis.getVoices(); } catch (e) { }
   G.scene = first; first.enter && first.enter();
   requestAnimationFrame(frame);

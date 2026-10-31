@@ -232,6 +232,7 @@ const waitPhase = L => ({
 LEVELS.push({
   id: 9, host: 'golden', title: 'Chargement Infini', sub: 'Fausse interface et patience', quoteBy: 'GoldenOS',
   quote: 'Installation de GoldenOS en cours. Merci de votre patience. Vous n\'en avez pas.',
+  tcontrols: 'Touche pour fermer, cocher, valider  ·  garde le doigt sur le bouton pour installer  ·  glisse pour faire défiler',
   controls: 'Souris : ferme les fenêtres, coche, valide  ·  Espace : installer  ·  molette / flèches : faire défiler',
   freed: 'GoldenOS est installé. Ton ordinateur est maintenant prévisible, lui aussi.',
   taunts: ['Tu as cliqué sur la pub. Tout le monde clique sur la pub.', 'Ta patience : 0 %.', 'Erreur utilisateur. Comme toujours.'],
@@ -377,6 +378,7 @@ class Strike {
 LEVELS.push({
   id: 10, host: 'golden', title: 'La Prophétie', sub: 'Duels contre la prédiction', quoteBy: 'Golden',
   quote: 'Tu crois choisir au hasard. Tu n\'as jamais rien choisi au hasard de ta vie.',
+  tcontrols: 'Touche une porte  ·  touche pierre, feuille ou ciseaux  ·  Mitty : ◀ ▶ pour bouger, ▲ deux fois pour sauter',
   controls: '← → ou clic : choisir une porte  ·  1 2 3 ou clic : pierre, feuille, ciseaux  ·  Mitty se déplace avec ← → et saute deux fois',
   freed: 'Tu as battu la prophétie. Golden pose enfin son café. Il t\'attend sur son trône.',
   taunts: ['Prédit. Prédit. Prédit.', 'Tu alternes. Tout le monde alterne.', 'Je me souviens de tous tes essais. Tous.'],

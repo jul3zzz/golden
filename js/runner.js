@@ -18,7 +18,7 @@ class LevelRun {
     this.state = this.i === 0 ? 'intro' : 'card'; this.st = 0; this.dh = 0; this.paused = false;
     this.make();
   }
-  enter() { A.amb(this.lv.boss ? .07 : .045); G.touchUI(true); }
+  enter() { A.amb(this.lv.boss ? .07 : .045); }
   exit() { G.touchUI(false); }
   make() {
     const ph = this.lv.phases[this.i];
@@ -63,6 +63,15 @@ class LevelRun {
   update(dt) {
     this.st += dt;
     if (G.hit.Escape || G.hit.KeyP) this.paused = !this.paused;
+    if (G.touch && innerHeight > innerWidth && this.state === 'play') this.paused = true;
+    const cur = this.cur, hide = this.paused || this.state === 'intro' || this.state === 'done';
+    G.touchUI(hide ? false : cur.touch !== undefined ? cur.touch : cur.w instanceof World ? 'plat' : false);
+    if (G.touchMode && cur.w instanceof World) {
+      const w = cur.w, sx = x => w.mirror ? W - (x - w.cam) : x - w.cam, ex = w.o.exit;
+      const bx = [{ x: sx(w.p.x) - 30, y: w.p.y - 92, w: 60, h: 100 }];
+      if (ex) bx.push({ x: sx(ex[0]) - 26, y: ex[1] - 72, w: 52, h: 76 });
+      G.touchGhost(bx);
+    }
     if (this.paused) return;
     if (this.bub) { this.bub.t -= dt; if (this.bub.t <= 0) this.bub = null; }
     switch (this.state) {
@@ -108,7 +117,7 @@ class LevelRun {
     skull(c, W - 170, 16, .9);
     txt(c, String(S.d.deaths), W - 158, 20, { size: 14, col: COL.ink, w: 700 });
     txt(c, 'phase : ' + this.dh, W - 110, 20, { size: 11, col: COL.dim, w: 600 });
-    if (btn(c, W - 40, 4, 32, 22, 'II', { size: 12, cut: 4 })) this.paused = !this.paused;
+    if (G.touch ? btn(c, W - 60, 2, 56, 27, 'II', { size: 14, cut: 4 }) : btn(c, W - 40, 4, 32, 22, 'II', { size: 12, cut: 4 })) this.paused = !this.paused;
   }
   drawBubble(c) {
     const a = Math.min(1, this.bub.t * 3);
@@ -135,8 +144,8 @@ class LevelRun {
     txt(c, '— ' + (lv.quoteBy || CH[host].name), 470, 300 + (lines(c, lv.quote, 440, { size: 19 }).length - 1) * 24, { size: 13, col: COL.dim });
     panel(c, 470, 340, 440, 74, { line: 'rgba(255,255,255,.12)' });
     txt(c, 'COMMANDES', 486, 362, { size: 11, col: COL.gold, w: 700, ls: 3 });
-    wrap(c, lv.controls, 486, 384, 410, 19, { size: 14, col: COL.ink, w: 500 });
-    txt(c, 'Appuie sur une touche', 470, 456, { size: 14, col: COL.dim, a: .55 + .45 * Math.sin(t * 4) });
+    wrap(c, (G.touch && lv.tcontrols) || lv.controls, 486, 384, 410, 19, { size: 14, col: COL.ink, w: 500 });
+    txt(c, G.touch ? 'Touche l’écran' : 'Appuie sur une touche', 470, 456, { size: 14, col: COL.dim, a: .55 + .45 * Math.sin(t * 4) });
   }
   drawCard(c) {
     const ph = this.lv.phases[this.i], n = this.lv.phases.length;
@@ -148,7 +157,7 @@ class LevelRun {
     txt(c, 'PROPHÉTIE DE GOLDEN', 196, 272, { size: 11, col: COL.red, ls: 3, w: 700 });
     wrap(c, '« ' + ph.proph + ' »', 196, 300, 570, 24, { size: 18, col: '#f3dede', w: 500, it: true });
     if (ph.tip) txt(c, ph.tip, 196, 376, { size: 13, col: COL.dim, w: 600, max: 570 });
-    txt(c, 'Appuie sur une touche', 784, 398, { al: 'right', size: 12, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
+    txt(c, G.touch ? 'Touche l’écran' : 'Appuie sur une touche', 784, 398, { al: 'right', size: 12, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
   }
   drawDead(c) {
     const k = Math.min(1, this.st * 5);
@@ -179,7 +188,7 @@ class LevelRun {
     txt(c, lv.freed || `${CH[lv.host].name} est libéré.`, 480, 336, { al: 'center', size: 18, col: COL.ink });
     txt(c, `${S.d.lvDeaths[lv.id] || 0} morts dans ce niveau  ·  ${S.d.deaths} au total`, 480, 368, { al: 'center', size: 13, col: COL.dim });
     txt(c, '« Ce n\'était qu\'une répétition. » — Golden', 480, 404, { al: 'center', size: 14, it: true, col: hexA(COL.red, .9) });
-    txt(c, lv.free ? 'Appuie sur une touche pour revenir au mode libre' : 'Appuie sur une touche pour revenir au palais', 480, 452, { al: 'center', size: 13, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
+    txt(c, (G.touch ? 'Touche l’écran' : 'Appuie sur une touche') + (lv.free ? ' pour revenir au mode libre' : ' pour revenir au palais'), 480, 452, { al: 'center', size: 13, col: COL.dim, a: .55 + .45 * Math.sin(G.t * 4) });
     c.restore();
   }
   drawPause(c) {

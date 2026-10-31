@@ -241,6 +241,7 @@ function bossPhase(cfg) {
 LEVELS.push({
   id: 11, boss: true, host: 'golden', title: 'Le Trône de Golden', sub: 'Combat final', quoteBy: 'Golden',
   quote: 'Je sais déjà comment ça se termine. Viens quand même. oi oi oi.',
+  tcontrols: '◀ ▶ : bouger  ·  ▲ : sauter  ·  ✦ ou toucher l’écran : tirer (seulement quand Golden boit son café)  ·  chaque coup reçu fait tomber un des six',
   controls: '← → : bouger · Espace : sauter · X, Maj ou clic : tirer (ça ne marche que quand Golden boit son café) · chaque coup reçu fait tomber un des six',
   taunts: ['Le roi ne tombe pas. Le roi prédit.', 'Mon café est encore chaud. Toi, tu refroidis.', 'Six amis. Six chutes. Une prophétie.'],
   onDone: () => G.go(new EndScene()),
